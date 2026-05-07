@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4 fw-bold border-start border-4 border-primary ps-3">
+        <i class="fas fa-history"></i> Lịch sử mua hàng
+    </h2>
+
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            
+            {% if orders|length == 0 %}
+                <div class="text-center py-5 bg-light rounded">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" width="80" class="mb-3 opacity-50">
+                    <h5 class="text-muted">Bạn chưa có đơn hàng nào!</h5>
+                    <a href="/" class="btn btn-primary mt-3">Dạo một vòng mua sách nhé</a>
+                </div>
+            {% else %}
+            
+                {% for order in orders %}
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <strong>Đơn hàng #{{ order.id }}</strong>
+                            <span class="text-muted small ms-2">
+                                <i class="far fa-clock"></i> {{ order.created_at }}
+                            </span>
+                            <a href="/order/{{ order.id }}" class="ms-3 btn btn-outline-primary btn-sm rounded-pill px-3">
+                                <i class="fas fa-eye me-1"></i>Theo dõi & Đánh giá
+                            </a>
+                        </div>
+                        
+                        <div>
+                            {% if order.status == 'Chờ xác nhận' %}
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="fas fa-clock"></i> Chờ xác nhận</span>
+                            {% elif order.status == 'Đã xác nhận' %}
+                                <span class="badge bg-primary px-3 py-2 rounded-pill"><i class="fas fa-check-circle"></i> Đã xác nhận</span>
+                            {% elif order.status == 'Đang vận chuyển' %}
+                                <span class="badge bg-info text-dark px-3 py-2 rounded-pill"><i class="fas fa-truck"></i> Đang vận chuyển</span>
+                            {% elif order.status == 'Đã giao' %}
+                                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fas fa-check"></i> Đã giao</span>
+                            {% elif order.status == 'Đã hủy' %}
+                                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fas fa-times"></i> Đã hủy</span>
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-2 rounded-pill">{{ order.status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush mb-3">
+                            {% for item in order.details %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded p-2 me-3 text-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-book text-secondary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ item.book_title }}</h6>
+                                        <small class="text-muted">x {{ item.quantity }}</small>
+                                    </div>
+                                </div>
+                                <span>{{ "{:,.0f}".format(item.price * item.quantity) }}đ</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                            <div class="text-muted small">
+                                Người nhận: <strong>{{ order.customer_name }}</strong> - {{ order.phone }} <br>
+                                Địa chỉ: {{ order.address }}
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">Tổng tiền:</small>
+                                <h4 class="text-danger fw-bold mb-0">{{ "{:,.0f}".format(order.total_amount) }}đ</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

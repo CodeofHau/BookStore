@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .cart-header { color: var(--primary-dark); font-weight: 800; border-left: 5px solid var(--primary); padding-left: 15px; }
+    .cart-img { width: 75px; height: 105px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .table-cart th { background-color: var(--bg-light); color: var(--primary-dark); font-weight: 600; border-bottom: 2px solid var(--border); border-top: none; padding: 15px 10px; }
+    .table-cart td { vertical-align: middle; padding: 15px 10px; border-bottom: 1px solid #f1f5f9; }
+    .qty-input-group { width: 110px; background: #fff; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; }
+    .qty-btn { background: var(--bg-light); border: none; color: var(--primary-dark); width: 32px; transition: 0.2s; }
+    .qty-btn:hover { background: var(--primary); color: white; }
+    .qty-input { border: none; text-align: center; font-weight: 600; color: var(--text-dark); background: transparent; padding: 0; }
+    
+    .total-section { background-color: #fff; padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,102,179,0.05); }
+    .btn-checkout { background-color: var(--secondary); color: white; border-radius: 8px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s; border: none; }
+    .btn-checkout:hover { background-color: #c0031a; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(232,4,28,0.25); color: white; }
+    .btn-remove { color: #cbd5e1; transition: 0.2s; background: none; border: none; }
+    .btn-remove:hover { color: var(--secondary); transform: scale(1.1); }
+</style>
+
+<div class="container py-5">
+    <h2 class="mb-4 cart-header">Giỏ hàng của bạn</h2>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-cart mb-0 text-center align-middle">
+                        <thead>
+                            <tr>
+                                <th class="text-start ps-4" style="width: 45%;">Sản phẩm</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                                <th><i class="fas fa-trash-alt text-muted"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-body">
+                            <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-circle-notch fa-spin me-2"></i>Đang tải giỏ hàng...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="total-section sticky-top" style="top: 100px;">
+                <h5 class="fw-bold text-primary-dark border-bottom pb-3 mb-4"><i class="fas fa-receipt me-2"></i>Tổng đơn hàng</h5>
+                
+                <div class="d-flex justify-content-between mb-3 text-muted">
+                    <span>Tạm tính:</span>
+                    <span id="sub-total" class="fw-medium text-dark">0đ</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 pt-3 border-top">
+                    <span class="fw-bold text-dark fs-5">Tổng cộng:</span>
+                    <span id="final-total" class="fs-3 fw-bold" style="color: var(--secondary);">0đ</span>
+                </div>
+                
+                <a href="/checkout" class="btn btn-checkout w-100 py-3 mb-3">
+                    TIẾN HÀNH THANH TOÁN <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+                
+                <a href="/" class="btn btn-light w-100 py-2 fw-medium" style="color: var(--primary-dark); border: 1px solid var(--border);">
+                    <i class="fas fa-reply me-2"></i> Tiếp tục mua sắm
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+
+    async function loadCart() {
+        try {
+            const response = await fetch('/api/cart-details', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            
+            const cartItems = await response.json();
+            const tbody = document.getElementById('cart-body');
+            tbody.innerHTML = ''; 
+
+            let totalAmount = 0;
+
+            if (cartItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" width="80" class="opacity-25 mb-3"><br>
+                    <span class="text-muted fw-medium">Giỏ hàng của bạn đang trống!</span><br>
+                    <a href="/" class="btn btn-primary btn-sm rounded-pill mt-3 px-4">Mua sắm ngay</a>
+                </td></tr>`;
+                updateTotal(0);
+                return;
+            }
+
+            cartItems.forEach(item => {
+                totalAmount += item.total;
+                const row = `
+                    <tr>
+                        <td class="text-start ps-4">
+                            <div class="d-flex align-items-center">
+                                <img src="${item.image_url}" class="cart-img me-3">
+                                <div>
+                                    <a href="/book/${item.id}" class="text-decoration-none text-dark fw-bold d-block mb-1 line-clamp-2">${item.title}</a>
+                                    <span class="badge bg-light text-muted border">${item.author}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="fw-medium">${formatCurrency(item.price)}</td>
+                        <td>
+                            <div class="qty-input-group d-flex mx-auto">
+                                <button class="qty-btn" onclick="updateItem('${item.id}', 'decrease')"><i class="fas fa-minus fs-7"></i></button>
+                                <input type="text" class="form-control qty-input" value="${item.quantity}" readonly>
+                                <button class="qty-btn" onclick="updateItem('${item.id}', 'increase')"><i class="fas fa-plus fs-7"></i></button>
+                            </div>
+                        </td>
+                        <td class="fw-bold" style="color: var(--primary-dark);">${formatCurrency(item.total)}</td>
+                        <td>
+                            <button class="btn-remove fs-5" onclick="updateItem('${item.id}', 'remove')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            updateTotal(totalAmount);
+
+        } catch (error) {
+            console.error('Lỗi tải giỏ hàng:', error);
+        }
+    }
+
+    function updateTotal(amount) {
+        document.getElementById('sub-total').innerText = formatCurrency(amount);
+        document.getElementById('final-total').innerText = formatCurrency(amount);
+    }
+
+    async function updateItem(bookId, action) {
+        try {
+            await fetch('/api/update-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId, action: action })
+            });
+            loadCart(); 
+        } catch (error) {
+            alert('Có lỗi xảy ra!');
+        }
+    }
+
+    loadCart();
+</script>
+{% endblock %}

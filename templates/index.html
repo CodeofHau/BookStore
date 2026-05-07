@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{# ===== HERO BANNER CAROUSEL CÓ THỂ VUỐT/BẤM VÀ TỰ ĐỘNG CHẠY ===== #}
+<div id="bannerCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000" style="margin-bottom: 0;">
+    
+    {% if galeries|length > 1 %}
+    <div class="carousel-indicators">
+        {% for banner in galeries %}
+        <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="true"></button>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="carousel-inner">
+        {% if galeries|length == 0 %}
+            <div class="carousel-item active">
+                <div class="hero-banner position-relative overflow-hidden" style="height: 420px; background: linear-gradient(135deg, #0066b3 0%, #004f8c 50%, #003366 100%);">
+                    <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:rgba(255,255,255,0.04);top:-150px;right:-100px;"></div>
+                    <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.06);bottom:-100px;left:-50px;"></div>
+                    <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,215,0,0.08);top:50px;left:40%;"></div>
+
+                    <div class="container h-100 d-flex align-items-center position-relative" style="z-index:2;">
+                        <div class="row align-items-center w-100 g-4">
+                            <div class="col-lg-7">
+                                <div class="hero-badge mb-3">
+                                    <span style="background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.4);color:#ffd700;padding:5px 14px;border-radius:20px;font-size:0.78rem;font-weight:600;letter-spacing:0.5px;">
+                                        <i class="fas fa-robot me-1"></i> TÍCH HỢP TRỢ LÝ AI
+                                    </span>
+                                </div>
+                                <h1 class="fw-800 text-white mb-3" style="font-size:2.6rem;line-height:1.2;font-weight:800;">
+                                    Khám Phá Tri Thức<br>
+                                    Cùng <span style="color:#ffd700;">BookStore AI</span>
+                                </h1>
+                                <p class="text-white mb-4" style="opacity:0.85;font-size:1rem;line-height:1.7;max-width:520px;">
+                                    Hệ thống mua sách thông minh tích hợp trợ lý ảo. Chỉ cần đưa ra ý tưởng — chúng tôi sẽ tìm cuốn sách thay đổi cuộc đời bạn!
+                                </p>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    <a href="#book-list" class="btn btn-warning btn-lg fw-bold px-4 rounded-3 shadow" style="background:#ffd700;border:none;color:#1a1a2e;">
+                                        <i class="fas fa-book-open me-2"></i>Khám Phá Ngay
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            {% for banner in galeries %}
+            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                {% if banner.product_id %}
+                    <a href="/book/{{ banner.product_id }}">
+                        <img src="{{ banner.image }}" class="d-block w-100" style="height: 420px; object-fit: cover;" alt="Banner Khuyến Mãi">
+                    </a>
+                {% else %}
+                    <img src="{{ banner.image }}" class="d-block w-100" style="height: 420px; object-fit: cover;" alt="Banner Sự Kiện">
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    {% if galeries|length > 1 %}
+    <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon bg-dark rounded-circle p-3 shadow" style="opacity: 0.6;" aria-hidden="true"></span>
+        <span class="visually-hidden">Trước</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon bg-dark rounded-circle p-3 shadow" style="opacity: 0.6;" aria-hidden="true"></span>
+        <span class="visually-hidden">Sau</span>
+    </button>
+    {% endif %}
+</div>
+
+{# ===== CHÍNH SÁCH CỬA HÀNG ===== #}
+<section class="usp-strip py-0" style="background:#fff;border-bottom:1px solid #e8f0fc;">
+    <div class="container">
+        <div class="row g-0 text-center">
+            <div class="col-6 col-md-3 usp-item">
+                <div class="d-flex align-items-center justify-content-center gap-3 py-3 px-2">
+                    <div class="usp-icon" style="background:#e8f4ff;color:#0066b3;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-truck fs-5"></i>
+                    </div>
+                    <div class="text-start">
+                        <div class="fw-700 text-dark" style="font-size:0.82rem;font-weight:700;">Miễn phí vận chuyển</div>
+                        <div class="text-muted" style="font-size:0.75rem;">Đơn từ 200.000đ</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 usp-item" style="border-left:1px solid #e8f0fc;">
+                <div class="d-flex align-items-center justify-content-center gap-3 py-3 px-2">
+                    <div class="usp-icon" style="background:#fff0f0;color:#e8041c;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-certificate fs-5"></i>
+                    </div>
+                    <div class="text-start">
+                        <div class="fw-700 text-dark" style="font-size:0.82rem;font-weight:700;">Chính hãng 100%</div>
+                        <div class="text-muted" style="font-size:0.75rem;">Hoàn tiền nếu giả</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 usp-item" style="border-left:1px solid #e8f0fc;">
+                <div class="d-flex align-items-center justify-content-center gap-3 py-3 px-2">
+                    <div class="usp-icon" style="background:#fff8e8;color:#ff6600;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-undo-alt fs-5"></i>
+                    </div>
+                    <div class="text-start">
+                        <div class="fw-700 text-dark" style="font-size:0.82rem;font-weight:700;">Đổi trả 30 ngày</div>
+                        <div class="text-muted" style="font-size:0.75rem;">Thủ tục đơn giản</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 usp-item" style="border-left:1px solid #e8f0fc;">
+                <div class="d-flex align-items-center justify-content-center gap-3 py-3 px-2">
+                    <div class="usp-icon" style="background:#e8fff4;color:#0aab5c;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-headset fs-5"></i>
+                    </div>
+                    <div class="text-start">
+                        <div class="fw-700 text-dark" style="font-size:0.82rem;font-weight:700;">Hỗ trợ 24/7</div>
+                        <div class="text-muted" style="font-size:0.75rem;">Chat AI tức thì</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== DANH SÁCH SÁCH VÀ BỘ LỌC GIÁ ===== #}
+<section class="py-5" id="book-list">
+    <div class="container">
+
+        <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="section-line" style="width:4px;height:28px;background:linear-gradient(180deg,#0066b3,#e8041c);border-radius:2px;"></div>
+                <h2 class="fw-bold text-dark mb-0" style="font-size:1.35rem;">
+                    {% if page_title %}{{ page_title }}{% else %}Tất Cả Sách{% endif %}
+                </h2>
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <form method="GET" action="" id="filterForm">
+                    {% if request.args.get('keyword') %}
+                        <input type="hidden" name="keyword" value="{{ request.args.get('keyword') }}">
+                    {% endif %}
+                    <select name="price" class="form-select form-select-sm rounded-pill shadow-sm px-3 py-2" onchange="document.getElementById('filterForm').submit()" style="border:1px solid #d1e8ff; color: #0066b3; font-weight: 600; cursor: pointer;">
+                        <option value="">Lọc theo giá: Tất cả</option>
+                        <option value="under_50" {% if request.args.get('price') == 'under_50' %}selected{% endif %}>Dưới 50.000đ</option>
+                        <option value="50_100" {% if request.args.get('price') == '50_100' %}selected{% endif %}>Từ 50.000đ - 100.000đ</option>
+                        <option value="100_200" {% if request.args.get('price') == '100_200' %}selected{% endif %}>Từ 100.000đ - 200.000đ</option>
+                        <option value="over_200" {% if request.args.get('price') == 'over_200' %}selected{% endif %}>Trên 200.000đ</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        {# Book grid #}
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
+            {% for book in books %}
+            <div class="col">
+                <div class="book-card card h-100 border-0 position-relative overflow-hidden">
+
+                    {% if book.get('stock', 100) <= 0 %}
+                    <div class="oos-overlay position-absolute w-100 h-100 d-flex justify-content-center align-items-center" style="background:rgba(255,255,255,0.75);z-index:3;">
+                        <span class="badge rounded-3 py-2 px-3 shadow" style="background:#333;font-size:0.8rem;">HẾT HÀNG</span>
+                    </div>
+                    {% else %}
+                        {% if book.origin_price and book.origin_price > book.price %}
+                        <span class="discount-badge position-absolute" style="top:10px;left:10px;z-index:2;background:#e8041c;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.72rem;font-weight:700;">
+                            -{{ ((book.origin_price - book.price) / book.origin_price * 100) | round | int }}%
+                        </span>
+                        {% endif %}
+                    {% endif %}
+
+                    <div class="book-img-wrap text-center" style="background:#f0f7ff;padding:16px 12px 10px;">
+                        <a href="/book/{{ book.id }}" class="text-decoration-none d-block">
+                            <img src="{{ book.image_url }}" class="book-cover-img" alt="{{ book.title }}"
+                                 style="height:200px;width:100%;object-fit:contain;">
+                        </a>
+                    </div>
+
+                    <div class="card-body d-flex flex-column p-3">
+                        <div class="mb-1" style="font-size:0.72rem;">
+                            {% set rating = book.rating|default(5)|int %}
+                            {% for i in range(5) %}
+                                <i class="{% if i < rating %}fas{% else %}far{% endif %} fa-star text-warning"></i>
+                            {% endfor %}
+                            <span class="text-muted ms-1">({{ rating }}.0)</span>
+                        </div>
+
+                        <h6 class="book-title-text fw-bold mb-1 text-truncate" title="{{ book.title }}" style="font-size:0.88rem;">
+                            <a href="/book/{{ book.id }}" class="text-decoration-none text-dark stretched-link">{{ book.title }}</a>
+                        </h6>
+
+                        <p class="text-muted mb-auto" style="font-size:0.78rem;">{{ book.get('author', 'BookStore') }}</p>
+
+                        <div class="d-flex justify-content-between align-items-center mt-2 position-relative" style="z-index:4;">
+                            <div>
+                                <div class="fw-bold" style="color:#e8041c;font-size:1rem;">{{ "{:,.0f}".format(book.price) }}đ</div>
+                                {% if book.origin_price and book.origin_price > book.price %}
+                                <div class="text-decoration-line-through text-muted" style="font-size:0.75rem;line-height:1;">
+                                    {{ "{:,.0f}".format(book.origin_price) }}đ
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if book.get('stock', 100) > 0 %}
+                            <button class="cart-add-btn" onclick="addToCartIndex('{{ book.id }}')" title="Thêm vào giỏ">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                            {% else %}
+                            <button class="cart-add-btn disabled-btn" disabled title="Hết hàng">
+                                <i class="fas fa-ban"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if books|length == 0 %}
+        <div class="text-center py-5 my-3">
+            <div style="width:80px;height:80px;background:#e8f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <i class="fas fa-book-open text-primary fs-2"></i>
+            </div>
+            <h5 class="text-muted fw-bold mb-2">Chưa có sách nào ở mục này</h5>
+            <a href="/" class="btn btn-primary rounded-3 px-4 fw-semibold mt-2">
+                <i class="fas fa-home me-2"></i>Quay về trang chủ
+            </a>
+        </div>
+        {% endif %}
+
+        {% if total_pages and total_pages > 1 %}
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center gap-1 mb-0">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link pag-btn" href="?page={{ page - 1 }}&price={{ request.args.get('price', '') }}&keyword={{ request.args.get('keyword', '') }}">
+                        <i class="fas fa-chevron-left me-1"></i>Trước
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item">
+                    <a class="page-link pag-btn {% if p == page %}pag-active{% endif %}" href="?page={{ p }}&price={{ request.args.get('price', '') }}&keyword={{ request.args.get('keyword', '') }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link pag-btn" href="?page={{ page + 1 }}&price={{ request.args.get('price', '') }}&keyword={{ request.args.get('keyword', '') }}">
+                        Sau<i class="fas fa-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+    </div>
+</section>
+
+<style>
+.book-card { background: #fff; border-radius: 10px !important; box-shadow: 0 1px 6px rgba(0,102,179,0.08); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.book-card:hover { transform: translateY(-6px); box-shadow: 0 12px 28px rgba(0,102,179,0.14) !important; }
+.book-cover-img { transition: transform 0.3s ease; }
+.book-card:hover .book-cover-img { transform: scale(1.04); }
+
+.cart-add-btn { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #0066b3; background: transparent; color: #0066b3; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+.cart-add-btn:hover { background: #0066b3; color: #fff; }
+.cart-add-btn.disabled-btn { border-color: #ccc; color: #ccc; cursor: not-allowed; }
+
+.pag-btn { border-radius: 8px !important; border: 1px solid #d1e8ff; color: #0066b3; font-weight: 600; font-size: 0.88rem; padding: 7px 14px; transition: all 0.2s; }
+.pag-btn:hover { background: #e8f4ff; color: #0066b3; border-color: #0066b3; }
+.pag-btn.pag-active { background: #0066b3 !important; color: #fff !important; border-color: #0066b3 !important; }
+</style>
+
+<script>
+async function addToCartIndex(bookId) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    const originalClass = icon.className;
+    icon.className = 'fas fa-spinner fa-spin';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/add_to_cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ book_id: bookId, quantity: 1 })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const badge = document.getElementById('cart-badge');
+            if (badge) badge.innerText = data.cart_count;
+
+            icon.className = 'fas fa-check';
+            btn.style.background = '#0066b3';
+            btn.style.color = '#fff';
+            setTimeout(() => {
+                icon.className = originalClass;
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.disabled = false;
+            }, 1500);
+        } else if (data.redirect) {
+            alert(data.message);
+            window.location.href = data.redirect;
+        } else {
+            alert('❌ Có lỗi xảy ra.');
+            icon.className = originalClass;
+            btn.disabled = false;
+        }
+    } catch (error) {
+        alert('Lỗi kết nối máy chủ!');
+        icon.className = originalClass;
+        btn.disabled = false;
+    }
+}
+</script>
+
+{% endblock %}

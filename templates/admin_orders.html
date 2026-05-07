@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý đơn hàng - BookStore AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-bg: #2c4260; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; background: var(--sidebar-bg); color: white; }
+        .sidebar .nav-link { color: rgba(255,255,255,0.8); padding: 12px 20px; border-radius: 0; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,0.1); color: #ffc107; border-left: 4px solid #ffc107; }
+        .sidebar .brand { padding: 20px; font-size: 24px; font-weight: bold; color: #ffc107; text-align: center; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .table-custom th { background-color: #f8f9fa; color: #333; font-weight: 600; white-space: nowrap; }
+        .action-icon { cursor: pointer; color: #6c757d; transition: 0.2s; font-size: 1.1rem;}
+        .action-icon:hover { color: #0d6efd; }
+        
+        .filter-input { border-radius: 6px; border: 1px solid #dee2e6; }
+        .badge-status { padding: 6px 12px; border-radius: 20px; font-weight: 500; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar d-flex flex-column">
+    <div class="brand">BookStore</div>
+    <ul class="nav flex-column mb-auto">
+        <li class="nav-item"><a href="/admin/dashboard" class="nav-link"><i class="fas fa-home me-2"></i> Trang chủ</a></li>
+        <li class="nav-item"><a href="/admin/users" class="nav-link"><i class="fas fa-users me-2"></i> Quản lý người dùng</a></li>
+        <li class="nav-item"><a href="/admin/categories" class="nav-link"><i class="fas fa-th-list me-2"></i> Quản lý danh mục</a></li>
+        <li class="nav-item"><a href="/admin/products" class="nav-link"><i class="fas fa-box me-2"></i> Quản lý sản phẩm</a></li>
+        <li class="nav-item"><a href="/admin/orders" class="nav-link active"><i class="fas fa-shopping-cart me-2"></i> Quản lý đơn hàng</a></li>
+        <li class="nav-item"><a href="/admin/banners" class="nav-link"><i class="fas fa-image me-2"></i> Quản lý trưng bày</a></li>
+        <li class="nav-item"><a href="/admin/coupons" class="nav-link"><i class="fas fa-ticket-alt me-2"></i> Quản lý mã giảm giá</a></li>
+    </ul>
+    <div class="p-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+        <a href="/logout" class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+    <h2 class="fw-bold text-center mb-4">Quản lý đơn hàng</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+            
+            <div class="d-flex mb-4">
+                <form class="d-flex gap-3 align-items-center" method="GET" action="/admin/orders">
+                    <select name="status" class="form-select filter-input" style="width: 180px;">
+                        <option value="">Trạng thái</option>
+                        <option value="Chờ xác nhận" {% if request.args.get('status') == 'Chờ xác nhận' %}selected{% endif %}>Chờ xác nhận</option>
+                        <option value="Đã xác nhận" {% if request.args.get('status') == 'Đã xác nhận' %}selected{% endif %}>Đã xác nhận</option>
+                        <option value="Đang vận chuyển" {% if request.args.get('status') == 'Đang vận chuyển' %}selected{% endif %}>Đang vận chuyển</option>
+                        <option value="Đã giao" {% if request.args.get('status') == 'Đã giao' %}selected{% endif %}>Đã giao</option>
+                        <option value="Đã hủy" {% if request.args.get('status') == 'Đã hủy' %}selected{% endif %}>Đã hủy</option>
+                    </select>
+                    
+                    <div class="input-group" style="width: 200px;">
+                        <span class="input-group-text bg-white"><i class="fas fa-calendar-alt text-muted"></i></span>
+                        <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}" class="form-control filter-input border-start-0" placeholder="Từ ngày">
+                    </div>
+                    
+                    <div class="input-group" style="width: 200px;">
+                        <span class="input-group-text bg-white"><i class="fas fa-calendar-alt text-muted"></i></span>
+                        <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}" class="form-control filter-input border-start-0" placeholder="Đến ngày">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary px-4" style="background-color: #e9f0fc; border-color: #d0e1fd; color: #0d6efd;">Tìm kiếm</button>
+                    <a href="/admin/orders" class="btn btn-light"><i class="fas fa-sync-alt"></i></a>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle table-custom text-center">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="text-start">Họ và tên</th>
+                            <th>Số điện thoại</th>
+                            <th class="text-start">Địa chỉ</th>
+                            <th>Mã giảm giá</th>
+                            <th class="text-end">Tổng tiền</th>
+                            <th>Thanh toán</th> <th>Trạng thái</th>
+                            <th>Chức năng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td class="fw-bold">{{ loop.index + ((page - 1) * 12) }}</td>
+                            <td class="text-start fw-semibold">{{ order.customer_name }}</td>
+                            <td>{{ order.phone }}</td>
+                            <td class="text-start text-truncate" style="max-width: 150px;" title="{{ order.address }}">{{ order.address }}</td>
+                            
+                            <td><span class="fw-bold text-primary">{{ order.coupon_code or '-' }}</span></td>
+                            
+                            <td class="text-end fw-bold text-danger">{{ "{:,.0f}".format(order.total_amount) }} đ</td>
+                            
+                            <td>
+                                {% if order.payment_method == 'banking' or order.payment_method == 'Chuyển khoản' %}
+                                    <span class="badge bg-info text-dark shadow-sm"><i class="fas fa-qrcode me-1"></i>Chuyển khoản</span>
+                                {% else %}
+                                    <span class="badge bg-secondary shadow-sm"><i class="fas fa-money-bill-wave me-1"></i>COD</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if order.status == 'Đã xác nhận' %}
+                                    <span class="badge-status bg-warning text-dark border border-warning">Đã xác nhận</span>
+                                {% elif order.status == 'Đang vận chuyển' %}
+                                    <span class="badge-status bg-primary text-white">Đang vận chuyển</span>
+                                {% elif order.status == 'Đã giao' %}
+                                    <span class="badge-status bg-success text-white">Đã giao</span>
+                                {% elif order.status == 'Đã hủy' %}
+                                    <span class="badge-status bg-danger text-white">Đã huỷ</span>
+                                {% else %}
+                                    <span class="badge-status bg-light text-warning border border-warning">Chờ xác nhận</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <i class="fas fa-list-alt action-icon text-success mx-1" title="Chi tiết" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ order.id }}"></i>
+                                
+                                {% if order.status not in ['Đã hủy', 'Đã giao'] %}
+                                <form action="/admin/update-order/{{ order.id }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="status" value="Đã hủy">
+                                    <button type="submit" class="btn btn-link p-0 m-0 border-0 align-baseline" onclick="return confirm('Xác nhận hủy đơn hàng này?');">
+                                        <i class="fas fa-ban action-icon text-danger mx-1" title="Hủy đơn"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                    <i class="fas fa-ban text-muted mx-1" style="opacity: 0.3;" title="Không thể hủy"></i>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="orderDetailModal{{ order.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content text-start">
+                                    <form method="POST" action="/admin/update-order/{{ order.id }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fw-bold">Chi tiết đơn hàng #{{ order.id[:8] }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p><strong>Khách hàng:</strong> {{ order.customer_name }}</p>
+                                            <p><strong>Ngày đặt:</strong> {{ order.created_at }}</p>
+                                            
+                                            <p><strong>Thanh toán:</strong> 
+                                                {% if order.payment_method == 'banking' or order.payment_method == 'Chuyển khoản' %}
+                                                    <span class="text-info fw-bold">Chuyển khoản (VietQR)</span>
+                                                {% else %}
+                                                    <span class="text-secondary fw-bold">Thanh toán khi nhận hàng (COD)</span>
+                                                {% endif %}
+                                            </p>
+
+                                            <p><strong>Mã áp dụng:</strong> <span class="text-primary fw-bold">{{ order.coupon_code or 'Không dùng' }}</span></p>
+                                            <p><strong>Tổng tiền thu:</strong> <span class="text-danger fw-bold">{{ "{:,.0f}".format(order.total_amount) }} đ</span></p>
+                                            
+                                            <hr>
+                                            
+                                            {% if order.status in ['Đã giao', 'Đã hủy'] %}
+                                                <div class="alert alert-secondary mb-0">
+                                                    <i class="fas fa-lock me-2"></i> Đơn hàng này đã <strong>{{ order.status }}</strong>. Không thể thay đổi trạng thái.
+                                                </div>
+                                            {% else %}
+                                                <label class="form-label fw-bold">Cập nhật trạng thái:</label>
+                                                <select name="status" class="form-select">
+                                                    <option value="Chờ xác nhận" {% if order.status == 'Chờ xác nhận' %}selected{% endif %}>Chờ xác nhận</option>
+                                                    <option value="Đã xác nhận" {% if order.status == 'Đã xác nhận' %}selected{% endif %}>Đã xác nhận</option>
+                                                    <option value="Đang vận chuyển" {% if order.status == 'Đang vận chuyển' %}selected{% endif %}>Đang vận chuyển</option>
+                                                    <option value="Đã giao" {% if order.status == 'Đã giao' %}selected{% endif %}>Đã giao</option>
+                                                    <option value="Đã hủy" {% if order.status == 'Đã hủy' %}selected{% endif %}>Đã hủy</option>
+                                                </select>
+                                            {% endif %}
+                                            
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                            {% if order.status not in ['Đã giao', 'Đã hủy'] %}
+                                                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                            {% endif %}
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not orders %}
+                <div class="text-center py-4 text-muted">Không tìm thấy đơn hàng nào phù hợp với bộ lọc.</div>
+                {% endif %}
+            </div>
+
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4 border-0">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link border-0 text-muted" href="{{ url_for('admin_orders', page=page-1, status=request.args.get('status'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}"><i class="fas fa-chevron-left"></i></a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link border-0 {% if p == page %}bg-light text-dark fw-bold rounded-circle{% else %}text-muted{% endif %}" href="{{ url_for('admin_orders', page=p, status=request.args.get('status'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link border-0 text-muted" href="{{ url_for('admin_orders', page=page+1, status=request.args.get('status'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}"><i class="fas fa-chevron-right"></i></a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

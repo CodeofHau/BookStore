@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .login-card { border: none; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,102,179,0.1); }
+    .login-header { color: var(--primary-dark); font-weight: 800; letter-spacing: -0.5px; }
+    .btn-login { background-color: var(--primary); color: white; border-radius: 8px; font-weight: 600; padding: 12px; transition: all 0.3s; border: none; }
+    .btn-login:hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,102,179,0.2); color: white; }
+    .form-control { border-radius: 8px; padding: 10px 15px; border-color: #e2e8f0; }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 0.25rem var(--primary-light); }
+    .input-group-text { border-radius: 8px 0 0 8px; border-color: #e2e8f0; background: var(--bg-light); color: var(--primary); }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center mt-5 mb-5">
+        <div class="col-md-5 col-lg-4">
+            <div class="card login-card">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 70px; height: 70px; background: var(--primary-light); color: var(--primary);">
+                            <i class="fas fa-user-lock fs-2"></i>
+                        </div>
+                        <h3 class="login-header mb-1">Đăng Nhập</h3>
+                        <p class="text-muted small">Chào mừng bạn quay trở lại BookStore</p>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} rounded-3 shadow-sm text-center small fw-medium">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark small">Email / Tên đăng nhập</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="text" name="email" class="form-control border-start-0 ps-0" placeholder="Nhập email hoặc tài khoản" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label fw-semibold text-dark small mb-0">Mật khẩu</label>
+                                <a href="/forgot-password" class="text-decoration-none small" style="color: var(--secondary); font-weight: 500;">Quên mật khẩu?</a>
+                            </div>
+                            <div class="input-group mt-2">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="Nhập mật khẩu" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-login w-100 mt-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>ĐĂNG NHẬP
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <span class="text-muted small">Chưa có tài khoản?</span> 
+                        <a href="/register" class="text-decoration-none fw-bold" style="color: var(--primary);">Đăng ký ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

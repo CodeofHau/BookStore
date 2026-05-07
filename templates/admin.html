@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-2 mb-4">
+            <div class="list-group shadow-sm sticky-top" style="top: 100px;">
+                <a href="#" class="list-group-item list-group-item-action active fw-bold">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+                <a href="/" class="list-group-item list-group-item-action">
+                    <i class="fas fa-home me-2"></i> Xem trang chủ
+                </a>
+                <a href="/logout" class="list-group-item list-group-item-action text-danger">
+                    <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-10">
+            <h2 class="fw-bold mb-4"><i class="fas fa-cogs me-2"></i>Trang Quản Trị Hệ Thống</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} shadow-sm border-0">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="row mb-5">
+                <div class="col-md-6 offset-md-3">
+                    <div class="card shadow border-0 rounded-4">
+                        <div class="card-body">
+                            <h5 class="fw-bold text-center text-primary mb-3">📊 Thống Kê Doanh Thu Theo Trạng Thái</h5>
+                            <div style="position: relative; height:250px; width:100%">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-4" id="adminTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold fs-5" data-bs-toggle="tab" data-bs-target="#orders">
+                        <i class="fas fa-shopping-cart me-2"></i>Quản Lý Đơn Hàng ({{ orders|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold fs-5" data-bs-toggle="tab" data-bs-target="#books">
+                        <i class="fas fa-book me-2"></i>Kho Sách
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content bg-white p-4 rounded-4 shadow-sm border-0">
+                
+                <div class="tab-pane fade show active" id="orders">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã Đơn</th>
+                                    <th>Khách Hàng</th>
+                                    <th>Số Điện Thoại</th>
+                                    <th>Tổng Tiền</th>
+                                    <th>Ngày Đặt</th>
+                                    <th>Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td class="fw-bold text-primary">#{{ order.id }}</td>
+                                    <td>{{ order.customer_name }}<br><small class="text-muted">{{ order.address }}</small></td>
+                                    <td>{{ order.phone }}</td>
+                                    <td class="text-danger fw-bold">{{ "{:,.0f}".format(order.total_amount) }}đ</td>
+                                    <td>{{ order.created_at }}</td>
+                                    <td>
+                                        {% set bg_color = '#ffffff' %}
+                                        {% set txt_color = '#000000' %}
+                                        
+                                        {% if order.status == 'Chờ duyệt' %}
+                                            {% set bg_color = '#fff3cd' %}
+                                            {% set txt_color = '#856404' %}
+                                        {% elif order.status == 'Đang giao' %}
+                                            {% set bg_color = '#cff4fc' %}
+                                            {% set txt_color = '#055160' %}
+                                        {% elif order.status == 'Hoàn thành' %}
+                                            {% set bg_color = '#d1e7dd' %}
+                                            {% set txt_color = '#0f5132' %}
+                                        {% elif order.status == 'Đã hủy' %}
+                                            {% set bg_color = '#f8d7da' %}
+                                            {% set txt_color = '#842029' %}
+                                        {% endif %}
+
+                                        <form action="/admin/update-order/{{ order.id }}" method="POST" class="m-0">
+                                            <select name="status" class="form-select form-select-sm fw-bold border-0 shadow-sm" 
+                                                    onchange="this.form.submit()" 
+                                                    style="width: 140px; cursor: pointer; background-color: {{ bg_color }}; color: {{ txt_color }};">
+                                                <option value="Chờ duyệt" {% if order.status == 'Chờ duyệt' %}selected{% endif %}>🕒 Chờ duyệt</option>
+                                                <option value="Đang giao" {% if order.status == 'Đang giao' %}selected{% endif %}>🚚 Đang giao</option>
+                                                <option value="Hoàn thành" {% if order.status == 'Hoàn thành' %}selected{% endif %}>✅ Hoàn thành</option>
+                                                <option value="Đã hủy" {% if order.status == 'Đã hủy' %}selected{% endif %}>❌ Đã hủy</option>
+                                            </select>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="6" class="text-center py-4 text-muted">Chưa có đơn hàng nào trong hệ thống.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="books">
+                    
+                    <div class="card bg-light mb-4 border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-plus-circle me-2"></i>Thêm sách mới</h5>
+                            <form action="/admin/add-book" method="POST" class="row g-3">
+                                <div class="col-md-4">
+                                    <input type="text" name="title" class="form-control" placeholder="Tên sách" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="author" class="form-control" placeholder="Tác giả" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" name="price" class="form-control" placeholder="Giá tiền (VNĐ)" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" name="stock" class="form-control" placeholder="Tồn kho" value="50" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <select name="category_id" class="form-select">
+                                        <option value="">-- Chọn danh mục --</option>
+                                        {% for cat in category_tree %}
+                                            {% if cat.subcategories %}
+                                                <optgroup label="{{ cat.name }}">
+                                                    {% for sub in cat.subcategories %}
+                                                        <option value="{{ sub.id }}">{{ sub.name }}</option>
+                                                    {% endfor %}
+                                                </optgroup>
+                                            {% else %}
+                                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" name="image_url" class="form-control" placeholder="Link ảnh bìa (URL)" required>
+                                </div>
+                                <div class="col-12">
+                                    <textarea name="description" class="form-control" rows="2" placeholder="Mô tả nội dung sách (Càng chi tiết AI học càng giỏi)..." required></textarea>
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button type="submit" class="btn btn-primary px-4 fw-bold"><i class="fas fa-save me-2"></i>Lưu Sách</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle table-hover">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th style="width: 50px;">ID</th>
+                                    <th style="width: 60px;">Ảnh</th>
+                                    <th class="text-start">Tên Sách & Tác Giả</th>
+                                    <th>Giá</th>
+                                    <th>Tồn kho</th>
+                                    <th style="width: 100px;">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center">
+                                {% for book in books %}
+                                <tr>
+                                    <td class="text-muted">{{ book.id }}</td>
+                                    <td><img src="{{ book.image_url }}" width="40" class="shadow-sm rounded"></td>
+                                    <td class="text-start">
+                                        <span class="fw-bold">{{ book.title }}</span><br>
+                                        <small class="text-muted"><i class="fas fa-pen-nib me-1"></i>{{ book.author }}</small>
+                                    </td>
+                                    <td class="text-danger fw-bold">{{ "{:,.0f}".format(book.price) }}đ</td>
+                                    <td>
+                                        {% if book.stock <= 5 %}
+                                            <span class="badge bg-danger">{{ book.stock }} cuốn</span>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ book.stock }} cuốn</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button class="btn btn-sm btn-outline-warning" title="Sửa thông tin"
+                                                    data-bs-toggle="modal" data-bs-target="#editBookModal"
+                                                    data-id="{{ book.id }}"
+                                                    data-title="{{ book.title }}"
+                                                    data-author="{{ book.author }}"
+                                                    data-price="{{ book.price | int }}"
+                                                    data-stock="{{ book.stock }}"
+                                                    data-category="{{ book.category_id or '' }}"
+                                                    data-image="{{ book.image_url }}"
+                                                    data-desc="{{ book.description }}"
+                                                    onclick="fillEditModal(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="/admin/delete-book/{{ book.id }}" class="btn btn-sm btn-outline-danger" title="Xóa sách" onclick="return confirm('Bạn chắc chắn muốn xóa cuốn sách này khỏi hệ thống chứ?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editBookModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-warning text-dark border-0 rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Sửa Thông Tin Sách</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="edit_form" method="POST">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold small">Tên sách</label>
+                            <input type="text" id="edit_title" name="title" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold small">Tác giả</label>
+                            <input type="text" id="edit_author" name="author" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold small">Giá tiền (VNĐ)</label>
+                            <input type="number" id="edit_price" name="price" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold small">Tồn kho</label>
+                            <input type="number" id="edit_stock" name="stock" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold small">Danh mục</label>
+                            <select id="edit_category" name="category_id" class="form-select">
+                                <option value="">-- Chọn danh mục --</option>
+                                {% for cat in category_tree %}
+                                    {% if cat.subcategories %}
+                                        <optgroup label="{{ cat.name }}">
+                                            {% for sub in cat.subcategories %}
+                                                <option value="{{ sub.id }}">{{ sub.name }}</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% else %}
+                                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="fw-bold small">Link ảnh bìa</label>
+                            <input type="text" id="edit_image" name="image_url" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="fw-bold small">Mô tả nội dung</label>
+                            <textarea id="edit_desc" name="description" class="form-control" rows="4" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning px-4 fw-bold text-dark"><i class="fas fa-save me-2"></i>Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Hàm JavaScript đổ dữ liệu vào Modal Sửa sách
+    function fillEditModal(btn) {
+        document.getElementById('edit_form').action = '/admin/edit-book/' + btn.getAttribute('data-id');
+        document.getElementById('edit_title').value = btn.getAttribute('data-title');
+        document.getElementById('edit_author').value = btn.getAttribute('data-author');
+        document.getElementById('edit_price').value = btn.getAttribute('data-price');
+        document.getElementById('edit_stock').value = btn.getAttribute('data-stock');
+        document.getElementById('edit_category').value = btn.getAttribute('data-category') || '';
+        document.getElementById('edit_image').value = btn.getAttribute('data-image');
+        document.getElementById('edit_desc').value = btn.getAttribute('data-desc');
+    }
+
+    // Biểu đồ Chart.js
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('revenueChart');
+        if (!ctx) return;
+
+        const labels = {{ chart_labels | safe }};
+        const data = {{ chart_data | safe }};
+        
+        if(data.length === 0) {
+            ctx.outerHTML = "<p class='text-center text-muted mt-5'>Chưa có dữ liệu doanh thu để hiển thị.</p>";
+            return;
+        }
+
+        new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: data,
+                    backgroundColor: [
+                        '#ffc107', '#0dcaf0', '#198754', '#dc3545' 
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { font: { size: 14, family: 'Roboto' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.raw || 0;
+                                return ' ' + new Intl.NumberFormat('vi-VN').format(value) + ' VNĐ';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

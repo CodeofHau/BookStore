@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .detail-header { color: var(--primary-dark); font-weight: 800; border-left: 5px solid var(--primary); padding-left: 15px; }
+    
+    /* TIMELINE SIÊU XỊN */
+    .icon-wrap {
+        width: 60px; height: 60px;
+        background: #fff;
+        border: 4px solid var(--border);
+        border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; color: #cbd5e1;
+        transition: all 0.5s ease;
+        position: relative;
+    }
+    .icon-wrap.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 0 0 6px var(--primary-light);
+    }
+    .icon-wrap.pulse {
+        animation: pulse-ring 2s infinite;
+        background: #fff;
+        color: var(--primary);
+        border-color: var(--primary);
+        border-width: 4px;
+    }
+    .step-text { font-size: 0.95rem; transition: color 0.3s; margin-top: 12px; font-weight: 600; }
+
+    @keyframes pulse-ring {
+        0% { box-shadow: 0 0 0 0 rgba(0, 102, 179, 0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(0, 102, 179, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 102, 179, 0); }
+    }
+    
+    /* Table styling */
+    .table-order th { background-color: var(--bg-light); color: var(--primary-dark); font-weight: 600; border-bottom: 2px solid var(--border); border-top: none; padding: 15px 10px; }
+    .table-order td { vertical-align: middle; padding: 15px 10px; border-bottom: 1px solid #f1f5f9; }
+    .product-img { width: 60px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+    
+    .btn-review { background-color: var(--secondary); color: white; border-radius: 20px; font-weight: 600; font-size: 0.85rem; padding: 6px 15px; transition: all 0.3s; border: none; }
+    .btn-review:hover { background-color: #c0031a; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(232,4,28,0.2); color: white; }
+</style>
+
+<div class="container py-5">
+    <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden">
+        <div class="card-body p-4 p-md-5">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+                <h4 class="detail-header mb-0">Tiến trình đơn hàng: #{{ order.id[:8] }}</h4>
+                <a href="/order-history" class="btn btn-outline-secondary btn-sm rounded-pill px-4 fw-medium">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại lịch sử
+                </a>
+            </div>
+
+            {% set status_val = {'Chờ xác nhận': 0, 'Đã xác nhận': 33, 'Đang vận chuyển': 66, 'Đã giao': 100}.get(order.status, -1) %}
+            {% if order.status == 'Đã hủy' %} {% set status_val = -1 %} {% endif %}
+
+            <div class="position-relative mb-5 mt-4 px-3 px-md-5">
+                <div class="progress" style="height: 6px; position: absolute; top: 27px; left: 12%; width: 76%; z-index: 1; background-color: var(--border); overflow: visible;">
+                    <div class="progress-bar" style="background-color: var(--primary); width: {{ status_val if status_val != -1 else 0 }}%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 3px;"></div>
+                </div>
+
+                <div class="d-flex justify-content-between position-relative" style="z-index: 2;">
+                    <div class="text-center" style="width: 25%;">
+                        <div class="icon-wrap shadow-sm {% if status_val > 0 %}active{% endif %} {% if status_val == 0 %}pulse{% endif %}">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <p class="step-text {% if status_val >= 0 %}text-primary{% else %}text-muted{% endif %}">Chờ xác nhận</p>
+                    </div>
+
+                    <div class="text-center" style="width: 25%;">
+                        <div class="icon-wrap shadow-sm {% if status_val > 33 %}active{% endif %} {% if status_val == 33 %}pulse{% endif %}">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <p class="step-text {% if status_val >= 33 %}text-primary{% else %}text-muted{% endif %}">Đã xác nhận</p>
+                    </div>
+
+                    <div class="text-center" style="width: 25%;">
+                        <div class="icon-wrap shadow-sm {% if status_val > 66 %}active{% endif %} {% if status_val == 66 %}pulse{% endif %}">
+                            <i class="fas fa-truck-fast"></i>
+                        </div>
+                        <p class="step-text {% if status_val >= 66 %}text-primary{% else %}text-muted{% endif %}">Đang vận chuyển</p>
+                    </div>
+
+                    <div class="text-center" style="width: 25%;">
+                        <div class="icon-wrap shadow-sm {% if status_val == 100 %}active{% endif %}">
+                            <i class="fas fa-house-circle-check"></i>
+                        </div>
+                        <p class="step-text {% if status_val == 100 %}text-primary{% else %}text-muted{% endif %}">Đã giao</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if order.status == 'Đã hủy' %}
+            <div class="alert alert-danger mb-5 py-3 text-center fw-bold rounded-3 shadow-sm border-0" style="background-color: #fff0f0; color: #c0031a;">
+                <i class="fas fa-times-circle fs-5 me-2"></i> Rất tiếc! Đơn hàng này đã bị hủy.
+            </div>
+            {% endif %}
+
+            <h5 class="fw-bold mb-4" style="color: var(--primary-dark);"><i class="fas fa-box me-2"></i>Sản phẩm trong đơn</h5>
+            <div class="table-responsive">
+                <table class="table table-order align-middle mb-0 text-center">
+                    <thead>
+                        <tr>
+                            <th class="text-start ps-4" style="width: 50%;">Sách</th>
+                            <th>Số lượng</th>
+                            <th>Thành tiền</th>
+                            <th class="pe-4">Đánh giá</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="text-start ps-4">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ item.image_url }}" class="product-img me-3 shadow-sm">
+                                    <span class="fw-bold line-clamp-2" style="color: var(--text-dark);">{{ item.book_title }}</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-muted">x{{ item.quantity }}</td>
+                            <td class="fw-bold" style="color: var(--secondary);">{{ "{:,.0f}".format(item.price * item.quantity) }}đ</td>
+                            <td class="pe-4">
+                                {% if order.status == 'Đã giao' %}
+                                    {% if item.is_reviewed %}
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 border border-success"><i class="fas fa-check me-1"></i> Đã đánh giá</span>
+                                    {% else %}
+                                        <button class="btn-review" onclick="openReviewModal('{{ item.product_id }}', '{{ item.book_title }}')">
+                                            <i class="fas fa-star me-1"></i> Viết đánh giá
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    <small class="text-muted fst-italic" style="font-size: 0.8rem;">Nhận hàng để đánh giá</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: var(--primary);">
+                <h5 class="modal-title fw-bold"><i class="fas fa-comment-dots me-2"></i>Đánh giá sản phẩm</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p id="review-book-name" class="fw-bold text-center fs-6 mb-3 text-dark"></p>
+                <div class="text-center mb-4 fs-2" id="rating-stars" style="color: #ffc107;">
+                    <i class="far fa-star cursor-pointer" data-val="1"></i>
+                    <i class="far fa-star cursor-pointer" data-val="2"></i>
+                    <i class="far fa-star cursor-pointer" data-val="3"></i>
+                    <i class="far fa-star cursor-pointer" data-val="4"></i>
+                    <i class="far fa-star cursor-pointer" data-val="5"></i>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-muted">Cảm nhận của bạn</label>
+                    <textarea id="review-comment" class="form-control" rows="4" placeholder="Sách nội dung hay, giao hàng nhanh..." style="border-radius: 8px; border-color: #e2e8f0;"></textarea>
+                </div>
+                <button class="btn w-100 py-2 fw-bold" style="background: var(--secondary); color: white; border-radius: 8px;" onclick="submitReview()">
+                    GỬI ĐÁNH GIÁ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentProductId = null;
+    let currentRating = 0;
+
+    function openReviewModal(pid, name) {
+        currentProductId = pid;
+        document.getElementById('review-book-name').innerText = name;
+        new bootstrap.Modal(document.getElementById('reviewModal')).show();
+    }
+
+    document.querySelectorAll('#rating-stars i').forEach(star => {
+        star.onclick = function() {
+            currentRating = this.getAttribute('data-val');
+            document.querySelectorAll('#rating-stars i').forEach(s => {
+                s.className = s.getAttribute('data-val') <= currentRating ? 'fas fa-star' : 'far fa-star';
+            });
+        }
+    });
+
+    async function submitReview() {
+        if(currentRating === 0) { alert("Vui lòng chọn số sao (từ 1 đến 5)!"); return; }
+        const res = await fetch('/api/submit-feedback', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                product_id: currentProductId,
+                rating: currentRating,
+                comment: document.getElementById('review-comment').value
+            })
+        });
+        const data = await res.json();
+        if(data.success) { 
+            alert("Cảm ơn bạn đã đánh giá!"); 
+            location.reload(); 
+        } else { 
+            alert("Lỗi gửi đánh giá!"); 
+        }
+    }
+</script>
+{% endblock %}

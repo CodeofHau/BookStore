@@ -1,0 +1,142 @@
+/* static/style.css */
+
+/* GLOBAL FONT */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* NAVBAR */
+.navbar-brand {
+    font-weight: 700;
+}
+.nav-link {
+    font-weight: 500;
+    color: #555 !important;
+    transition: color 0.3s;
+}
+.nav-link:hover, .nav-link.active {
+    color: #0d6efd !important;
+}
+
+/* HERO SECTION */
+.hero-section {
+    background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hiệu ứng ảnh bay bay */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+}
+.floating-anim {
+    animation: float 4s ease-in-out infinite;
+}
+
+/* FEATURES BOX */
+.feature-box {
+    transition: transform 0.3s;
+}
+.feature-box:hover {
+    transform: translateY(-5px);
+}
+
+/* BOOK CARD (QUAN TRỌNG) */
+.book-card {
+    transition: all 0.3s ease;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.book-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+}
+
+.card-img-wrapper {
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f1f3f5;
+}
+
+.book-cover {
+    height: 90%;
+    width: auto;
+    object-fit: contain;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.2); /* Đổ bóng cho sách trông 3D */
+    transition: transform 0.3s;
+}
+
+.book-card:hover .book-cover {
+    transform: scale(1.05);
+}
+
+/* Nút thêm vào giỏ */
+.add-to-cart-btn {
+    width: 40px; 
+    height: 40px;
+    z-index: 10; /* Để nó nổi lên trên link của card */
+}
+
+/* CHATBOT */
+#chat-btn {
+    position: fixed; bottom: 30px; right: 30px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: #0d6efd; color: white; border: none;
+    font-size: 24px; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+    z-index: 1000; transition: transform 0.3s;
+}
+#chat-btn:hover { transform: scale(1.1); }
+
+#chat-window {
+    position: fixed; bottom: 100px; right: 30px;
+    width: 350px; height: 450px; display: none;
+    background: white; z-index: 1000; flex-direction: column;
+}
+#chat-body {
+    flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+}
+.user-msg { align-self: flex-end; background: #0d6efd; color: white; padding: 8px 12px; border-radius: 15px 15px 0 15px; margin: 5px; max-width: 85%; font-size: 0.9rem; }
+.bot-msg { align-self: flex-start; background: #f1f1f1; color: black; padding: 8px 12px; border-radius: 15px 15px 15px 0; margin: 5px; max-width: 85%; font-size: 0.9rem; }
+
+/* Khung ảnh chính */
+.product-image-container {
+    overflow: hidden;
+}
+
+/* Ảnh thumbnail nhỏ */
+.img-thumbnail {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: 0.3s;
+    border: 2px solid transparent;
+}
+.img-thumbnail:hover, .active-thumb {
+    opacity: 1;
+    border-color: #0d6efd; /* Màu xanh viền */
+}
+
+/* Tab mô tả */
+.nav-tabs .nav-link {
+    color: #555;
+    border: none;
+    border-bottom: 3px solid transparent;
+}
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom: 3px solid #0d6efd;
+    background: none;
+}
+
+/* Input số lượng */
+#qty-input {
+    max-width: 50px;
+    border-left: none;
+    border-right: none;
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống quản trị - BookStore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-bg: #2c4260; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 260px; height: 100vh; position: fixed; background: var(--sidebar-bg); color: white; transition: all 0.3s; }
+        .sidebar .nav-link { color: rgba(255,255,255,0.8); padding: 12px 20px; border-radius: 0; transition: 0.3s; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,0.1); color: #ffc107; border-left: 4px solid #ffc107; }
+        .sidebar .brand { padding: 20px; font-size: 24px; font-weight: bold; color: #ffc107; text-align: center; }
+
+        .main-content { margin-left: 260px; padding: 30px; }
+        .card { border: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .header-title { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 25px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar d-flex flex-column">
+    <div class="brand">BookStore</div>
+    
+    <ul class="nav flex-column mb-auto">
+        <li class="nav-item"><a href="/admin/dashboard" class="nav-link active"><i class="fas fa-home me-2"></i> Trang chủ</a></li>
+        <li class="nav-item"><a href="/admin/users" class="nav-link"><i class="fas fa-users me-2"></i> Quản lý người dùng</a></li>
+        <li class="nav-item"><a href="/admin/categories" class="nav-link"><i class="fas fa-th-list me-2"></i> Quản lý danh mục</a></li>
+        <li class="nav-item"><a href="/admin/products" class="nav-link"><i class="fas fa-box me-2"></i> Quản lý sản phẩm</a></li>
+        <li class="nav-item"><a href="/admin/orders" class="nav-link"><i class="fas fa-shopping-cart me-2"></i> Quản lý đơn hàng</a></li>
+        <li class="nav-item"><a href="/admin/banners" class="nav-link"><i class="fas fa-image me-2"></i> Quản lý trưng bày</a></li>
+        <li class="nav-item"><a href="/admin/coupons" class="nav-link"><i class="fas fa-ticket-alt me-2"></i> Quản lý mã giảm giá</a></li>
+    </ul>
+
+    <div class="p-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+        <a href="/logout" class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="header-title d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold">Hệ thống quản trị</h2>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title fw-bold"><i class="fas fa-chart-area text-primary me-2"></i>Thống kê doanh thu</h5>
+                <form class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">Chọn ngày:</span>
+                    <input type="date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm">
+                    <input type="date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm">
+                    <button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+                </form>
+            </div>
+            <div style="height: 350px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header bg-white fw-bold">Sản phẩm bán chạy</div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Sách</th>
+                                <th>Số lượng bán</th>
+                                <th>Đơn giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in best_sellers %}
+                            <tr>
+                                <td>
+                                    <img src="{{ book.image_url }}" width="40" class="rounded me-2">
+                                    <span class="small fw-semibold">{{ book.book_title }}</span>
+                                </td>
+                                <td><span class="badge bg-info text-dark">{{ book.total_sold }} cuốn</span></td>
+                                <td class="text-primary fw-bold">
+                                    {% if book.price %}
+                                        {{ "{:,.0f}".format(book.price) }}đ
+                                    {% else %}
+                                        0đ
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="card bg-gradient-primary text-white p-4 mb-3" style="background: linear-gradient(45deg, #2c4260, #4a69bd);">
+                <h6>Doanh thu kỳ này</h6>
+                <h2 class="fw-bold">
+                    {% if values %}
+                        {{ "{:,.0f}".format(values|sum) }} VNĐ
+                    {% else %}
+                        0 VNĐ
+                    {% endif %}
+                </h2>
+                <p class="small mb-0">Thống kê theo khoảng thời gian đã lọc</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    
+    // Gradient cho đường biểu đồ
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(13, 110, 253, 0.3)');
+    gradient.addColorStop(1, 'rgba(13, 110, 253, 0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ labels|tojson }},
+            datasets: [{
+                label: 'Doanh thu (VNĐ)',
+                data: {{ values|tojson }},
+                borderColor: '#0d6efd',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4, 
+                pointRadius: 5,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#0d6efd',
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { callback: (value) => value.toLocaleString() + 'đ' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+</body>
+</html>

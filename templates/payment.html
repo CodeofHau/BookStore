@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán QR - BookStore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0066b3;
+            --primary-dark: #004f8c;
+            --primary-light: #e8f4ff;
+            --secondary: #e8041c;
+            --text-dark: #1a1a2e;
+            --text-muted: #6b7280;
+            --border: #d1e8ff;
+            --bg-light: #f0f7ff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: linear-gradient(145deg, #f0f7ff 0%, #e8f0f8 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        /* ---- HEADER ---- */
+        .pay-header {
+            background: var(--primary);
+            padding: 14px 0;
+            box-shadow: 0 2px 12px rgba(0,102,179,0.25);
+        }
+        .pay-header .brand {
+            font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none;
+        }
+        .pay-header .brand span { color: #ffd700; }
+        .secure-badge {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.78rem; color: rgba(255,255,255,0.8);
+        }
+        .secure-badge i { color: #4ade80; }
+
+        /* ---- MAIN LAYOUT ---- */
+        .pay-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 16px 60px;
+        }
+
+        /* ---- PAGE TITLE ---- */
+        .pay-title-section {
+            text-align: center; margin-bottom: 28px;
+        }
+        .pay-title-section .icon-ring {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1.6rem;
+            margin: 0 auto 14px;
+            box-shadow: 0 4px 20px rgba(0,102,179,0.3);
+        }
+        .pay-title-section h2 {
+            font-size: 1.4rem; font-weight: 800; color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .pay-title-section p { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* ---- CARDS ---- */
+        .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 640px) { .pay-grid { grid-template-columns: 1fr; } }
+
+        .pay-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .pay-card-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-light);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .pay-card-header h6 { margin: 0; font-weight: 700; font-size: 0.9rem; color: var(--text-dark); }
+        .pay-card-header .hdr-icon {
+            width: 30px; height: 30px; border-radius: 7px;
+            display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+        }
+        .pay-card-header .hdr-icon.blue { background: var(--primary-light); color: var(--primary); }
+        .pay-card-header .hdr-icon.green { background: #e8fff0; color: #16a34a; }
+        .pay-card-body { padding: 20px; }
+
+        /* ---- QR CARD ---- */
+        .qr-box {
+            text-align: center;
+        }
+        .qr-frame {
+            display: inline-block;
+            padding: 10px;
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0,102,179,0.1);
+            position: relative;
+            margin-bottom: 14px;
+        }
+        .qr-frame img {
+            width: 220px; height: 220px;
+            border-radius: 6px; display: block;
+        }
+        .qr-corner {
+            position: absolute;
+            width: 18px; height: 18px;
+            border-color: var(--primary);
+            border-style: solid;
+        }
+        .qr-corner.tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+        .qr-corner.tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+        .qr-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+        .qr-corner.br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+        .bank-logo {
+            width: 38px; height: 38px; border-radius: 8px;
+            background: var(--primary); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 800; letter-spacing: -0.5px;
+        }
+
+        /* ---- INFO ROWS ---- */
+        .info-row {
+            display: flex; align-items: flex-start;
+            gap: 10px; padding: 10px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .ir-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px; }
+        .info-row .ir-value { font-size: 0.92rem; font-weight: 700; color: var(--text-dark); }
+        .info-row .ir-value.amount { font-size: 1.2rem; color: var(--secondary); }
+        .info-row .ir-icon {
+            width: 34px; height: 34px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 0.85rem;
+        }
+
+        /* Copy button */
+        .copy-btn {
+            background: none; border: 1px solid var(--border);
+            border-radius: 6px; padding: 3px 10px;
+            font-size: 0.75rem; font-weight: 600;
+            color: var(--primary); cursor: pointer;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            transition: all 0.2s; margin-left: auto; flex-shrink: 0;
+        }
+        .copy-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .copy-btn.copied { background: #16a34a; color: #fff; border-color: #16a34a; }
+
+        /* ---- AMOUNT HIGHLIGHT ---- */
+        .amount-chip {
+            background: linear-gradient(135deg, var(--secondary), #ff3344);
+            color: #fff;
+            border-radius: 10px;
+            padding: 14px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .amount-chip .label { font-size: 0.8rem; opacity: 0.85; margin-bottom: 4px; }
+        .amount-chip .amount { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+
+        /* ---- ALERT WARNING ---- */
+        .pay-warning {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 0.82rem; color: #92400e;
+            margin-bottom: 16px;
+        }
+        .pay-warning i { color: #d97706; margin-top: 2px; flex-shrink: 0; }
+
+        /* ---- STEPS ---- */
+        .step-list { list-style: none; padding: 0; margin: 0; }
+        .step-list li {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border);
+            font-size: 0.84rem; color: var(--text-dark);
+        }
+        .step-list li:last-child { border-bottom: none; }
+        .step-num {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--primary); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+        }
+
+        /* ---- BUTTONS ---- */
+        .btn-confirm {
+            width: 100%;
+            background: #16a34a; color: #fff; border: none;
+            border-radius: 10px; padding: 14px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 0.97rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-confirm:hover { background: #15803d; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(22,163,74,0.3); }
+
+        .btn-later {
+            width: 100%;
+            background: none; color: var(--text-muted); border: 1.5px solid var(--border);
+            border-radius: 10px; padding: 12px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; margin-top: 10px;
+            text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-later:hover { border-color: var(--text-muted); color: var(--text-dark); background: #f9f9f9; }
+
+        /* ---- ORDER BADGE ---- */
+        .order-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--primary-light);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.82rem; font-weight: 600; color: var(--primary);
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="pay-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="/" class="brand"><i class="fas fa-book-open me-1"></i>Book<span>Store</span></a>
+                <div class="secure-badge">
+                    <i class="fas fa-lock"></i> Thanh toán an toàn &amp; bảo mật
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pay-wrapper">
+
+        <!-- Title -->
+        <div class="pay-title-section">
+            <div class="icon-ring"><i class="fas fa-qrcode"></i></div>
+            <h2>Quét mã QR để thanh toán</h2>
+            <p>Sử dụng app ngân hàng hoặc ví điện tử để quét mã bên dưới</p>
+            <div class="order-badge">
+                <i class="fas fa-receipt"></i>
+                Đơn hàng: <strong>#{{ order.id }}</strong>
+            </div>
+        </div>
+
+        <div class="pay-grid">
+
+            <!-- LEFT: QR CODE -->
+            <div class="pay-card">
+                <div class="pay-card-header">
+                    <div class="hdr-icon blue"><i class="fas fa-qrcode"></i></div>
+                    <h6>Mã QR thanh toán</h6>
+                </div>
+                <div class="pay-card-body">
+                    <div class="qr-box">
+                        <!-- Bank info -->
+                        <div class="d-flex align-items-center gap-2 mb-3 justify-content-center">
+                            <div class="bank-logo">VCB</div>
+                            <div style="text-align:left;">
+                                <div style="font-size:0.82rem;color:var(--text-muted);">Ngân hàng</div>
+                                <div style="font-size:0.9rem;font-weight:700;">Vietcombank</div>
+                            </div>
+                        </div>
+
+                        <div class="qr-frame">
+                            <div class="qr-corner tl"></div>
+                            <div class="qr-corner tr"></div>
+                            <div class="qr-corner bl"></div>
+                            <div class="qr-corner br"></div>
+                            <img id="qr-image" src="" alt="QR Code thanh toán">
+                        </div>
+
+                        <div style="font-size:0.78rem;color:var(--text-muted);">
+                            <i class="fas fa-mobile-alt me-1"></i>
+                            Mở app ngân hàng → Chuyển tiền → Quét mã QR
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: DETAILS -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+
+                <!-- Amount -->
+                <div class="amount-chip">
+                    <div class="label"><i class="fas fa-money-bill-wave me-1"></i>Số tiền cần thanh toán</div>
+                    <div class="amount">{{ "{:,.0f}".format(order.total_amount) }}đ</div>
+                </div>
+
+                <!-- Bank details -->
+                <div class="pay-card">
+                    <div class="pay-card-header">
+                        <div class="hdr-icon blue"><i class="fas fa-university"></i></div>
+                        <h6>Thông tin chuyển khoản</h6>
+                    </div>
+                    <div class="pay-card-body py-0">
+                        <div class="info-row">
+                            <div class="ir-icon" style="background:#e8f4ff;color:var(--primary);"><i class="fas fa-university"></i></div>
+                            <div style="flex:1;">
+                                <div class="ir-label">Ngân hàng</div>
+                                <div class="ir-value">Vietcombank (VCB)</div>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="ir-icon" style="background:#fff3e0;color:#ea6c00;"><i class="fas fa-id-card"></i></div>
+                            <div style="flex:1;">
+                                <div class="ir-label">Số tài khoản</div>
+                                <div class="ir-value" id="acc-no">1027766108</div>
+                            </div>
+                            <button class="copy-btn" onclick="copyText('1027766108', this)"><i class="fas fa-copy me-1"></i>Sao chép</button>
+                        </div>
+                        <div class="info-row">
+                            <div class="ir-icon" style="background:#e8fff0;color:#16a34a;"><i class="fas fa-edit"></i></div>
+                            <div style="flex:1;">
+                                <div class="ir-label">Nội dung chuyển khoản</div>
+                                <div class="ir-value" id="content-ck" style="font-family:monospace; font-size:0.85rem;"></div>
+                            </div>
+                            <button class="copy-btn" id="copy-content-btn" onclick="copyContent(this)"><i class="fas fa-copy me-1"></i>Sao chép</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning -->
+                <div class="pay-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Vui lòng <strong>không thay đổi</strong> nội dung chuyển khoản để hệ thống tự động xác nhận đơn hàng.</span>
+                </div>
+
+                <!-- Steps -->
+                <div class="pay-card">
+                    <div class="pay-card-header">
+                        <div class="hdr-icon green"><i class="fas fa-list-ol"></i></div>
+                        <h6>Hướng dẫn thanh toán</h6>
+                    </div>
+                    <div class="pay-card-body py-0">
+                        <ul class="step-list">
+                            <li><div class="step-num">1</div><span>Mở ứng dụng ngân hàng hoặc ví điện tử</span></li>
+                            <li><div class="step-num">2</div><span>Chọn <strong>Quét mã QR</strong> và quét mã bên trái</span></li>
+                            <li><div class="step-num">3</div><span>Kiểm tra số tiền và nội dung CK, xác nhận thanh toán</span></li>
+                            <li><div class="step-num">4</div><span>Nhấn <strong>"Tôi đã chuyển khoản"</strong> bên dưới</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <button class="btn-confirm" onclick="finishPayment()">
+                    <i class="fas fa-check-circle"></i>
+                    TÔI ĐÃ CHUYỂN KHOẢN
+                </button>
+                <a href="/" class="btn-later">
+                    <i class="fas fa-arrow-left"></i>
+                    Để sau, quay về trang chủ
+                </a>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const MY_BANK = {
+            BANK_ID: 'VCB',
+            ACCOUNT_NO: '1027766108',
+            TEMPLATE: 'compact2'
+        };
+
+        const orderId = '{{ order.id }}';
+        const amount = '{{ order.total_amount | int }}';
+        const content = `THANHTOAN DONHANG ${orderId}`;
+
+        const qrUrl = `https://img.vietqr.io/image/${MY_BANK.BANK_ID}-${MY_BANK.ACCOUNT_NO}-${MY_BANK.TEMPLATE}.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
+
+        document.getElementById('qr-image').src = qrUrl;
+        document.getElementById('content-ck').innerText = content;
+
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check me-1"></i>Đã chép';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+            });
+        }
+
+        function copyContent(btn) {
+            copyText(content, btn);
+        }
+
+        function finishPayment() {
+            if (confirm('Bạn xác nhận đã hoàn thành chuyển khoản?')) {
+                alert('Cảm ơn bạn! Chúng tôi sẽ xác nhận và giao hàng sớm nhất. 📦');
+                window.location.href = '/order-history';
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookStore - Thế Giới Sách</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0066b3;
+            --primary-dark: #004f8c;
+            --primary-light: #e8f4ff;
+            --secondary: #e8041c;
+            --accent: #ff6600;
+            --text-dark: #1a1a2e;
+            --text-muted: #6b7280;
+            --bg-light: #f0f7ff;
+            --border: #d1e8ff;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Be Vietnam Pro', sans-serif; background: #f5f8fc; color: var(--text-dark); }
+
+        /* ===== TOP BAR ===== */
+        .topbar { background: var(--primary-dark); color: rgba(255,255,255,0.85); font-size: 0.8rem; padding: 6px 0; }
+        .topbar a { color: rgba(255,255,255,0.85); text-decoration: none; }
+        .topbar a:hover { color: #fff; }
+
+        /* ===== NAVBAR MAIN ===== */
+        .navbar-main { background: var(--primary); padding: 12px 0; box-shadow: 0 2px 10px rgba(0,102,179,0.3); }
+        .navbar-brand-text { font-size: 1.6rem; font-weight: 800; color: #fff !important; letter-spacing: -0.5px; }
+        .navbar-brand-text span { color: #ffd700; }
+
+        .search-wrapper { position: relative; flex: 1; max-width: 480px; }
+        .search-wrapper input { border: none; border-radius: 6px 0 0 6px; padding: 10px 16px; font-size: 0.9rem; width: 100%; outline: none; font-family: 'Be Vietnam Pro', sans-serif; }
+        .search-wrapper button { background: var(--secondary); border: none; color: #fff; padding: 10px 18px; border-radius: 0 6px 6px 0; cursor: pointer; transition: background 0.2s; }
+        .search-wrapper button:hover { background: #c0031a; }
+
+        .cart-btn { position: relative; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3); color: #fff; border-radius: 8px; padding: 8px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; white-space: nowrap; }
+        .cart-btn:hover { background: rgba(255,255,255,0.25); color: #fff; }
+        .cart-badge { position: absolute; top: -8px; right: -8px; background: var(--secondary); color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+        .user-btn { background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3); color: #fff; border-radius: 8px; padding: 8px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .user-btn:hover { background: rgba(255,255,255,0.25); color: #fff; }
+
+        /* ===== CATEGORY NAV ===== */
+        .cat-nav { background: var(--primary-dark); border-top: 1px solid rgba(255,255,255,0.1); }
+        .cat-nav .nav-link { color: rgba(255,255,255,0.9) !important; font-size: 0.85rem; font-weight: 500; padding: 9px 14px; transition: all 0.2s; white-space: nowrap; }
+        .cat-nav .nav-link:hover, .cat-nav .nav-link.active { background: rgba(255,255,255,0.15); color: #fff !important; border-radius: 4px; }
+        .cat-nav .nav-link i { margin-right: 5px; }
+
+        .mega-menu { width: 580px; max-width: 96vw; padding: 20px; border: none; border-radius: 0 0 12px 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); margin-top: 0 !important; }
+        .mega-menu-header { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); border-bottom: 2px solid var(--primary-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .cat-item { border-radius: 8px; padding: 10px 12px; transition: all 0.2s; cursor: pointer; text-decoration: none; display: flex; align-items: center; color: var(--text-dark); }
+        .cat-item:hover { background: var(--primary-light); transform: translateX(3px); color: var(--primary); }
+        .cat-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+
+        /* ===== COMMON ===== */
+        .dropdown-menu { border: none; box-shadow: 0 8px 25px rgba(0,0,0,0.12); border-radius: 10px; }
+        .dropdown-item { font-size: 0.9rem; padding: 8px 16px; color: var(--text-dark); }
+        .dropdown-item:hover { background: var(--primary-light); color: var(--primary); }
+        .dropdown-item i { width: 20px; color: var(--primary); }
+        main { min-height: 80vh; }
+        
+        .alert { border-radius: 8px; border: none; }
+        .alert-success { background: #e8fff0; color: #166534; }
+        .alert-danger { background: #fff0f0; color: #991b1b; }
+        .alert-warning { background: #fffbeb; color: #92400e; }
+
+        footer { background: #0d1b3e; color: rgba(255,255,255,0.75); }
+        footer h5 { color: #fff; font-weight: 700; margin-bottom: 16px; }
+        footer a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+        footer a:hover { color: #fff; }
+        footer .footer-brand { color: #fff; font-size: 1.4rem; font-weight: 800; }
+        footer .footer-brand span { color: #ffd700; }
+        .footer-divider { border-color: rgba(255,255,255,0.1); }
+        .social-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: all 0.2s; text-decoration: none; }
+        .social-btn:hover { background: var(--primary); color: #fff; }
+
+        /* ===== CHAT BOT ===== */
+        #chat-btn { position: fixed; bottom: 24px; right: 24px; z-index: 1050; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(0,102,179,0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        #chat-btn:hover { background: var(--primary-dark); transform: scale(1.08); }
+        #chat-window { position: fixed; bottom: 90px; right: 24px; z-index: 1050; width: 340px; height: 460px; border-radius: 16px; overflow: hidden; display: none; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+        .chat-header { background: var(--primary); }
+        #chat-body { flex: 1; overflow-y: auto; background: #f8fafc; }
+        .bot-msg { background: #fff; border-radius: 0 12px 12px 12px; padding: 10px 14px; margin: 10px; font-size: 0.88rem; border: 1px solid var(--border); max-width: 85%; line-height: 1.5; }
+        .user-msg { background: var(--primary); color: #fff; border-radius: 12px 0 12px 12px; padding: 10px 14px; margin: 10px; font-size: 0.88rem; max-width: 85%; margin-left: auto; line-height: 1.5; }
+        .chat-footer { background: #fff; }
+        .chat-footer input { font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.88rem; }
+
+        .notif-btn { background: none; border: none; color: #fff; position: relative; padding: 6px 10px; }
+        .notif-badge { position: absolute; top: 0; right: 0; background: var(--secondary); color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+        @media (max-width: 768px) { .topbar { display: none; } .search-wrapper { max-width: 100%; } #chat-window { width: calc(100vw - 20px); right: 10px; } }
+    </style>
+</head>
+<body>
+
+    <div class="topbar d-none d-md-block">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex gap-4">
+                    <span><i class="fas fa-phone-alt me-1"></i> Hotline: <a href="tel:0818180763">0818 180 763</a></span>
+                    <span><i class="fas fa-envelope me-1"></i> <a href="mailto:hl0818180763@gmail.com">hl0818180763@gmail.com</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar-main sticky-top">
+        <div class="container">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <a href="/" class="navbar-brand-text text-decoration-none me-2">
+                    <i class="fas fa-book-open me-1"></i>Book<span>Store</span>
+                </a>
+
+                <form action="/search" method="GET" class="search-wrapper d-flex flex-grow-1">
+                    <input type="text" name="keyword" placeholder="Tìm tên sách, tác giả, thể loại..." value="{{ request.args.get('keyword', '') }}">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    {% if session.get('user_id') %}
+                    <div class="dropdown">
+                        <button class="notif-btn" data-bs-toggle="dropdown" onclick="markNotificationsRead()">
+                            <i class="fas fa-bell fs-5"></i>
+                            {% if unread_count and unread_count > 0 %}
+                            <span id="notif-badge" class="notif-badge">{{ unread_count }}</span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" style="width: 310px; max-height: 380px; overflow-y: auto;">
+                            <li><div class="px-3 py-2 fw-bold text-primary border-bottom"><i class="fas fa-bell me-2"></i>Thông báo</div></li>
+                            {% if notifications|length == 0 %}
+                                <li><div class="text-center text-muted py-4 small">Chưa có thông báo nào</div></li>
+                            {% else %}
+                                {% for notif in notifications %}
+                                <li>
+                                    <a class="dropdown-item py-2 border-bottom {% if not notif.read %}bg-light{% endif %}" href="/order-history">
+                                        <small class="d-block text-wrap" style="white-space: normal; line-height: 1.4;">{{ notif.content }}</small>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <a href="/cart" class="cart-btn">
+                        <i class="fas fa-shopping-cart me-1"></i>
+                        <span class="d-none d-md-inline">Giỏ hàng</span>
+                        <span id="cart-badge" class="cart-badge">{{ cart_count|default(0) }}</span>
+                    </a>
+
+                    {% if session.get('user_id') %}
+                    <div class="dropdown">
+                        <button class="user-btn dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>{{ session.get('user_name') }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end mt-2">
+                            {% if session.get('role') == 'admin' %}
+                                <li><a class="dropdown-item fw-bold text-primary" href="/admin"><i class="fas fa-cogs"></i> Trang quản trị</a></li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-id-card"></i> Hồ sơ cá nhân</a></li>
+                            <li><a class="dropdown-item" href="/order-history"><i class="fas fa-history"></i> Lịch sử mua hàng</a></li>
+                            <li><a class="dropdown-item" href="/change-password"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="/login" class="user-btn text-decoration-none">
+                        <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <nav class="cat-nav d-none d-lg-block">
+        <div class="container">
+            <div class="d-flex align-items-center">
+                <div class="dropdown position-static">
+                    <a class="nav-link dropdown-toggle fw-bold d-flex align-items-center gap-2"
+                       href="#" data-bs-toggle="dropdown"
+                       style="background: rgba(255,255,255,0.15); border-radius: 4px; padding: 9px 14px;">
+                        <i class="fas fa-th-large"></i> Danh mục sách
+                    </a>
+                    <div class="dropdown-menu shadow-lg mega-menu">
+                        <div class="mega-menu-header">
+                            <i class="fas fa-compass me-2"></i>Khám phá kho tàng tri thức
+                        </div>
+                        <div class="row g-1">
+                            {% for cat in category_tree %}
+                            <div class="col-md-6">
+                                <a class="cat-item" href="/category/{{ cat.id }}">
+                                    <div class="cat-icon me-3 shadow-sm">
+                                        {% if 'Tâm' in cat.name or 'Kỹ' in cat.name %}<i class="fas fa-brain"></i>
+                                        {% elif 'Văn' in cat.name %}<i class="fas fa-feather-alt text-success"></i>
+                                        {% elif 'Kinh' in cat.name or 'Tài' in cat.name %}<i class="fas fa-chart-line text-danger"></i>
+                                        {% elif 'Truyện' in cat.name or 'Manga' in cat.name %}<i class="fas fa-mask text-warning"></i>
+                                        {% elif 'Sử' in cat.name or 'Triết' in cat.name %}<i class="fas fa-landmark text-secondary"></i>
+                                        {% elif 'Ngoại' in cat.name or 'Nước' in cat.name %}<i class="fas fa-globe-americas text-info"></i>
+                                        {% else %}<i class="fas fa-book-open"></i>{% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold" style="font-size: 0.9rem;">{{ cat.name }}</div>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <a class="nav-link ms-2" href="/"><i class="fas fa-home"></i> Trang chủ</a>
+                <a class="nav-link" href="/order-history"><i class="fas fa-truck-fast"></i> Theo dõi đơn hàng</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="pt-5 pb-3 mt-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="footer-brand mb-3"><i class="fas fa-book-open me-1"></i>Book<span>Store</span></div>
+                    <p style="font-size: 0.88rem; line-height: 1.7;">
+                        Nền tảng mua sách trực tuyến hàng đầu, tích hợp trí tuệ nhân tạo giúp bạn tìm được cuốn sách phù hợp nhất.
+                    </p>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-youtube"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <h5 style="font-size: 0.95rem;">Về chúng tôi</h5>
+                    <ul class="list-unstyled" style="font-size: 0.88rem;">
+                        <li class="mb-2"><a href="#">Giới thiệu</a></li>
+                        <li class="mb-2"><a href="#">Tuyển dụng</a></li>
+                        <li class="mb-2"><a href="#">Tin tức</a></li>
+                        <li class="mb-2"><a href="#">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <h5 style="font-size: 0.95rem;">Hỗ trợ</h5>
+                    <ul class="list-unstyled" style="font-size: 0.88rem;">
+                        <li class="mb-2"><a href="#">Chính sách đổi trả</a></li>
+                        <li class="mb-2"><a href="#">Chính sách bảo mật</a></li>
+                        <li class="mb-2"><a href="#">Điều khoản sử dụng</a></li>
+                        <li class="mb-2"><a href="/order-history">Tra cứu đơn hàng</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4">
+                    <h5 style="font-size: 0.95rem;">Liên hệ & Hỗ trợ</h5>
+                    <ul class="list-unstyled" style="font-size: 0.88rem;">
+                        <li class="mb-2"><i class="fas fa-phone-alt me-2 text-primary"></i>Hotline: <a href="tel:0818180763">0818 180 763</a></li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2 text-primary"></i><a href="mailto:hl0818180763@gmail.com">hl0818180763@gmail.com</a></li>
+                        <li class="mb-2"><i class="fas fa-clock me-2 text-primary"></i>T2–T7: 8:00 – 21:30 | CN: 8:00 – 21:00</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="footer-divider my-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center" style="font-size: 0.82rem;">
+                <span>© 2026 BookStore. All rights reserved.</span>
+            </div>
+        </div>
+    </footer>
+
+    <button id="chat-btn" onclick="toggleChat()" title="Chat với AI tư vấn sách">
+        <i class="fas fa-robot fa-lg"></i>
+    </button>
+    <div id="chat-window">
+        <div class="chat-header p-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center text-white">
+                <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size:0.9rem;">Trợ lý tư vấn sách</div>
+                    <small style="opacity:0.8;font-size:0.75rem;">🟢 Đang hoạt động</small>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="btn-close btn-close-white btn-sm"></button>
+        </div>
+        <div id="chat-body" class="p-2" style="flex:1;overflow-y:auto;">
+            <div class="bot-msg">Xin chào! 👋<br>Mình là AI tư vấn sách. Bạn đang tìm thể loại sách nào?</div>
+        </div>
+        <div class="chat-footer p-2 d-flex gap-2">
+            <input type="text" id="user-input" class="form-control rounded-pill" 
+                   style="font-size:0.85rem;" placeholder="Hỏi về sách..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()" class="btn btn-primary rounded-circle" style="width:36px;height:36px;padding:0;flex-shrink:0;">
+                <i class="fas fa-paper-plane" style="font-size:0.8rem;"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleChat() {
+            const w = document.getElementById('chat-window');
+            w.style.display = (w.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const msg = input.value.trim();
+            const body = document.getElementById('chat-body');
+            if (!msg) return;
+
+            body.innerHTML += `<div class="user-msg">${msg}</div>`;
+            input.value = '';
+            body.scrollTop = body.scrollHeight;
+
+            const lid = 'load-' + Date.now();
+            body.innerHTML += `<div id="${lid}" class="bot-msg text-muted"><i class="fas fa-circle-notch fa-spin me-1"></i>Đang suy nghĩ...</div>`;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                document.getElementById(lid).remove();
+
+                let html = `<div class="bot-msg">${data.response.replace(/\n/g,'<br>')}</div>`;
+                if (data.books && data.books.length > 0) {
+                    html += `<div class="bot-msg" style="background:#e8f4ff;border-color:#b3d7ff;"><small class="fw-bold text-primary">📚 Gợi ý sách:</small><br>`;
+                    data.books.forEach(b => {
+                        html += `<a href="/book/${b.id}" class="text-decoration-none d-block mt-1" style="font-size:0.85rem;">📖 ${b.title} - <span class="text-danger fw-bold">${new Intl.NumberFormat('vi-VN').format(b.price)}đ</span></a>`;
+                    });
+                    html += `</div>`;
+                }
+                body.innerHTML += html;
+            } catch {
+                document.getElementById(lid).innerText = '⚠️ Lỗi kết nối server!';
+            }
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function markNotificationsRead() {
+            const badge = document.getElementById('notif-badge');
+            if (badge) {
+                fetch('/api/read-notifications', { method: 'POST' });
+                badge.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

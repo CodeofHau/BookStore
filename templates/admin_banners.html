@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý trưng bày - BookStore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-bg: #2c4260; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; background: var(--sidebar-bg); color: white; }
+        .sidebar .nav-link { color: rgba(255,255,255,0.8); padding: 12px 20px; border-radius: 0; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,0.1); color: #ffc107; border-left: 4px solid #ffc107; }
+        .sidebar .brand { padding: 20px; font-size: 24px; font-weight: bold; color: #ffc107; text-align: center; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .table-custom th { background-color: #f8f9fa; color: #333; font-weight: 600; white-space: nowrap; }
+        .action-icon { cursor: pointer; color: #6c757d; transition: 0.2s; font-size: 1.1rem; }
+        .action-icon:hover { color: #0d6efd; }
+        .action-icon.text-danger:hover { color: #dc3545; }
+        .banner-img { width: 200px; height: auto; border-radius: 4px; border: 1px solid #ddd; object-fit: contain; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar d-flex flex-column">
+    <div class="brand">BookStore</div>
+    <ul class="nav flex-column mb-auto">
+        <li class="nav-item"><a href="/admin/dashboard" class="nav-link"><i class="fas fa-home me-2"></i> Trang chủ</a></li>
+        <li class="nav-item"><a href="/admin/users" class="nav-link"><i class="fas fa-users me-2"></i> Quản lý người dùng</a></li>
+        <li class="nav-item"><a href="/admin/categories" class="nav-link"><i class="fas fa-th-list me-2"></i> Quản lý danh mục</a></li>
+        <li class="nav-item"><a href="/admin/products" class="nav-link"><i class="fas fa-box me-2"></i> Quản lý sản phẩm</a></li>
+        <li class="nav-item"><a href="/admin/orders" class="nav-link"><i class="fas fa-shopping-cart me-2"></i> Quản lý đơn hàng</a></li>
+        <li class="nav-item"><a href="/admin/banners" class="nav-link active"><i class="fas fa-image me-2"></i> Quản lý trưng bày</a></li>
+        <li class="nav-item"><a href="/admin/coupons" class="nav-link"><i class="fas fa-ticket-alt me-2"></i> Quản lý mã giảm giá</a></li>
+    </ul>
+    <div class="p-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+        <a href="/logout" class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+    <h2 class="fw-bold text-center mb-4">Quản lý trưng bày (Galeries)</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="mb-4">
+                <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#addBannerModal">
+                    <i class="fas fa-plus me-2"></i>Thêm trưng bày
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle table-custom text-center">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th class="text-start">Tên sản phẩm</th>
+                            <th>Mã sản phẩm (ID)</th>
+                            <th>Ảnh (Image)</th>
+                            <th style="width: 100px;">Chức năng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for banner in banners %}
+                        <tr>
+                            <td class="fw-bold">{{ loop.index }}</td>
+                            <td class="text-start fw-semibold">{{ banner.product_name or '✨ Banner sự kiện chung' }}</td>
+                            <td class="small text-muted">{{ banner.product_id or '-' }}</td>
+                            <td>
+                                <img src="{{ banner.image }}" alt="Gallery Image" class="banner-img">
+                            </td>
+                            <td>
+                                <i class="fas fa-edit action-icon text-warning mx-1" title="Sửa" data-bs-toggle="modal" data-bs-target="#editBannerModal{{ loop.index }}"></i>
+                                <a href="/admin/delete-banner/{{ banner.id }}" onclick="return confirm('Bạn có chắc chắn muốn xóa mục trưng bày này?');">
+                                    <i class="fas fa-trash-alt action-icon text-danger mx-1" title="Xóa"></i>
+                                </a>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="editBannerModal{{ loop.index }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content text-start">
+                                    <form method="POST" action="/admin/edit-banner/{{ banner.id }}" enctype="multipart/form-data">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fw-bold">Sửa thông tin trưng bày</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Chọn sản phẩm liên kết <span class="text-muted">(Không bắt buộc)</span></label>
+                                                <select name="product_id" class="form-select">
+                                                    <option value="">-- Banner sự kiện chung (Không click được) --</option>
+                                                    {% for p in products %}
+                                                        <option value="{{ p.id }}" {% if p.id|string == banner.product_id|string %}selected{% endif %}>{{ p.title }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Đổi file ảnh mới <span class="text-muted">(Bỏ trống nếu giữ nguyên ảnh cũ)</span></label>
+                                                <input type="file" name="image_file" class="form-control" accept="image/*">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not banners %}
+                <div class="text-center py-4 text-muted">Chưa có mục trưng bày nào.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="modal fade" id="addBannerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/admin/add-banner" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Thêm trưng bày mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <div class="mb-3">
+                        <label class="form-label">Chọn sản phẩm liên kết <span class="text-muted">(Không bắt buộc)</span></label>
+                        <select name="product_id" class="form-select">
+                            <option value="">-- Banner sự kiện chung (Không click được) --</option>
+                            {% for p in products %}
+                                <option value="{{ p.id }}">{{ p.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tải file ảnh lên <span class="text-danger">*</span></label>
+                        <input type="file" name="image_file" class="form-control" accept="image/*" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Thêm mới</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

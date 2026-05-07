@@ -1,0 +1,107 @@
+[
+    {
+        "title": "Đắc Nhân Tâm",
+        "author": "Dale Carnegie",
+        "price": 86000,
+        "image_url": "https://upload.wikimedia.org/wikipedia/vi/thumb/a/a2/Dac_nhan_tam.jpg/220px-Dac_nhan_tam.jpg",
+        "description": "Cuốn sách nổi tiếng nhất về nghệ thuật ứng xử, thu phục lòng người. Sách giúp bạn hiểu được các nguyên tắc trong giao tiếp, cách tạo thiện cảm và dẫn dắt người khác theo suy nghĩ của mình. Phù hợp cho người làm kinh doanh, quản lý và giao tiếp xã hội."
+    },
+    {
+        "title": "Nhà Giả Kim",
+        "author": "Paulo Coelho",
+        "price": 79000,
+        "image_url": "https://upload.wikimedia.org/wikipedia/vi/9/9d/Nha_gia_kim_bia.jpg",
+        "description": "Tiểu thuyết ngụ ngôn về hành trình theo đuổi ước mơ của chàng chăn cừu Santiago. Sách dạy về việc lắng nghe trái tim, nhận biết các dấu hiệu vũ trụ và kiên trì theo đuổi vận mệnh của mình. Một cuốn sách truyền cảm hứng khởi nghiệp mạnh mẽ."
+    },
+    {
+        "title": "Dạy Con Làm Giàu (Tập 1)",
+        "author": "Robert T. Kiyosaki",
+        "price": 110000,
+        "image_url": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1349072382i/16033324.jpg",
+        "description": "Sách thay đổi tư duy về tiền bạc. Tác giả so sánh tư duy của người cha giàu và người cha nghèo, giải thích về tài sản, tiêu sản và tầm quan trọng của kiến thức tài chính (financial literacy) để đạt được tự do tài chính."
+    },
+    {
+        "title": "Cha Giàu Cha Nghèo",
+        "author": "Robert T. Kiyosaki",
+        "price": 95000,
+        "image_url": "https://www.nxbtre.com.vn/Images/Book/nxbtre_full_21152023_091544.jpg",
+        "description": "Cuốn sách kinh điển về tài chính cá nhân. Hướng dẫn cách để tiền làm việc cho mình thay vì làm việc vì tiền. Sách nhấn mạnh vào đầu tư, bất động sản và khởi nghiệp kinh doanh."
+    },
+    {
+        "title": "Từ Tốt Đến Vĩ Đại",
+        "author": "Jim Collins",
+        "price": 145000,
+        "image_url": "https://bizweb.dktcdn.net/100/197/269/products/tu-tot-den-vi-dai.jpg",
+        "description": "Nghiên cứu về cách các công ty bình thường trở thành vĩ đại và duy trì thành tích đó. Khái niệm 'Nhà lãnh đạo cấp độ 5', 'Văn hóa kỷ luật' và 'Bánh đà' là những điểm nhấn quan trọng cho các nhà quản trị doanh nghiệp."
+    },
+    {
+        "title": "Mắt Biếc",
+        "author": "Nguyễn Nhật Ánh",
+        "price": 110000,
+        "image_url": "https://upload.wikimedia.org/wikipedia/vi/2/23/Mat_biec.jpg",
+        "description": "Câu chuyện tình yêu buồn và đầy tiếc nuối của Ngạn dành cho Hà Lan. Sách miêu tả sâu sắc những rung động đầu đời, tình yêu đơn phương bền bỉ và bối cảnh làng quê Việt Nam yên bình nhưng đượm buồn."
+    },
+    {
+        "title": "Dế Mèn Phiêu Lưu Ký",
+        "author": "Tô Hoài",
+        "price": 50000,
+        "image_url": "https://upload.wikimedia.org/wikipedia/vi/6/67/De_men_phieu_luu_ky_bia.jpg",
+        "description": "Tác phẩm văn học thiếu nhi kinh điển của Việt Nam. Kể về cuộc phiêu lưu của chú Dế Mèn qua thế giới loài vật, rút ra những bài học về tình bạn, lòng dũng cảm và thái độ sống khiêm tốn, biết yêu thương mọi người."
+    },
+    {
+        "title": "Số Đỏ",
+        "author": "Vũ Trọng Phụng",
+        "price": 85000,
+        "image_url": "https://upload.wikimedia.org/wikipedia/vi/d/db/So_do_bia.jpg",
+        "description": "Tiểu thuyết trào phúng xuất sắc nhất văn học hiện thực phê phán. Kể về Xuân Tóc Đỏ, một kẻ hạ lưu nhờ may mắn và thói giả dối của xã hội thượng lưu thành thị mà leo lên đỉnh cao danh vọng. Một bức tranh châm biếm sâu cay."
+    },
+    {
+        "title": "Vợ Nhặt",
+        "author": "Kim Lân",
+        "price": 45000,
+        "image_url": "https://reviewsach.net/wp-content/uploads/2018/12/vo-nhat-kim-lan.jpg",
+        "description": "Truyện ngắn lấy bối cảnh nạn đói năm 1945. Câu chuyện về anh cu Tràng 'nhặt' được vợ giữa lúc đói khát, thể hiện khát vọng sống mãnh liệt, tình yêu thương đùm bọc giữa con người với con người trong hoàn cảnh khốn cùng."
+    },
+    {
+        "title": "Clean Code - Mã Sạch",
+        "author": "Robert C. Martin",
+        "price": 250000,
+        "image_url": "https://salt.tikicdn.com/cache/w1200/ts/product/ea/03/49/1f61202e86330b659c2386345632d431.jpg",
+        "description": "Cuốn sách gối đầu giường cho mọi lập trình viên. Hướng dẫn cách viết code dễ đọc, dễ bảo trì, cách đặt tên biến, viết hàm và tái cấu trúc mã nguồn. Giúp nâng cao tay nghề lập trình chuyên nghiệp."
+    },
+    {
+        "title": "Design Patterns",
+        "author": "Gang of Four",
+        "price": 300000,
+        "image_url": "https://m.media-amazon.com/images/I/81-y82m0p0L._AC_UF1000,1000_QL80_.jpg",
+        "description": "Giới thiệu 23 mẫu thiết kế phần mềm kinh điển. Giúp lập trình viên giải quyết các vấn đề thiết kế phổ biến một cách hiệu quả, tạo ra các hệ thống phần mềm linh hoạt và dễ mở rộng."
+    },
+    {
+        "title": "Introduction to Algorithms",
+        "author": "Thomas H. Cormen",
+        "price": 450000,
+        "image_url": "https://m.media-amazon.com/images/I/61Pgdn8Ys-L._AC_UF1000,1000_QL80_.jpg",
+        "description": "Sách giáo khoa chuẩn mực về Giải thuật và Cấu trúc dữ liệu. Bao gồm các chủ đề từ sắp xếp, tìm kiếm, đồ thị đến quy hoạch động. Dành cho sinh viên CNTT và kỹ sư phần mềm muốn nắm vững nền tảng."
+    },
+    {
+        "title": "Tư Duy Nhanh Và Chậm",
+        "author": "Daniel Kahneman",
+        "price": 180000,
+        "image_url": "https://bizweb.dktcdn.net/100/197/269/products/tu-duy-nhanh-va-cham.jpg",
+        "description": "Giải mã hai hệ thống tư duy của con người: Hệ thống 1 nhanh, bản năng và cảm tính; Hệ thống 2 chậm, toan tính và logic. Sách giúp bạn hiểu cách não bộ ra quyết định và tránh các bẫy tâm lý."
+    },
+    {
+        "title": "Sức Mạnh Của Thói Quen",
+        "author": "Charles Duhigg",
+        "price": 120000,
+        "image_url": "https://salt.tikicdn.com/cache/w1200/ts/product/00/c7/23/e8c1875323971694f419c8f000375681.jpg",
+        "description": "Khám phá khoa học đằng sau việc hình thành và thay đổi thói quen. Giải thích vòng lặp thói quen gồm: Gợi ý, Hành động và Phần thưởng. Ứng dụng để xây dựng thói quen tốt và bỏ thói quen xấu."
+    },
+    {
+        "title": "Hiểu Về Trái Tim",
+        "author": "Minh Niệm",
+        "price": 98000,
+        "image_url": "https://www.nxbtre.com.vn/Images/Book/nxbtre_full_20362018_023608.jpg",
+        "description": "Cuốn sách giúp chữa lành tâm hồn. Thiền sư Minh Niệm chia sẻ về các trạng thái cảm xúc: Khổ đau, Hạnh phúc, Tức giận, Tha thứ... Giúp người đọc tìm lại sự bình an trong nội tâm."
+    }
+]

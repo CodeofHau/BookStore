@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .profile-card { border: none; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,102,179,0.08); overflow: hidden; }
+    .profile-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 30px; border-bottom: 5px solid var(--secondary); }
+    .avatar-wrap { 
+        width: 130px; height: 130px; 
+        border: 4px solid #fff; 
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+        border-radius: 50%;
+        position: relative;
+        margin-top: -65px;
+        background: #fff;
+        cursor: pointer;
+    }
+    .form-label { color: var(--primary-dark); font-weight: 700; font-size: 0.9rem; }
+    .form-control, .form-select { border-radius: 8px; border-color: var(--border); padding: 10px 15px; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 0.25rem var(--primary-light); }
+    .btn-save { background-color: var(--secondary); color: white; border-radius: 30px; font-weight: 700; padding: 12px 40px; letter-spacing: 0.5px; transition: all 0.3s; border: none; }
+    .btn-save:hover { background-color: #c0031a; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(232,4,28,0.25); color: white; }
+    .cam-icon { position: absolute; bottom: 5px; right: 5px; background: var(--primary); color: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid #fff; }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card profile-card h-100 mb-5">
+                
+                <div class="profile-header text-center">
+                    <h4 class="mb-0 fw-bold text-white"><i class="fas fa-id-card me-2"></i>Hồ Sơ Của Bạn</h4>
+                </div>
+                
+                <div class="card-body p-4 p-md-5 pt-0">
+                    <form id="profile-form" action="/profile" method="POST" enctype="multipart/form-data">
+                        
+                        <div class="d-flex flex-column align-items-center mb-4">
+                            <div class="avatar-wrap" id="avatar-container">
+                                <img src="{{ user.image if user.image else 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}" 
+                                     alt="Avatar" id="avatar-preview" class="rounded-circle w-100 h-100" style="object-fit: cover;">
+                                
+                                <div class="cam-icon shadow-sm"><i class="fas fa-camera fs-7"></i></div>
+                                
+                                <div id="drag-overlay" class="position-absolute top-0 start-0 w-100 h-100 rounded-circle d-flex align-items-center justify-content-center bg-dark bg-opacity-50 text-white d-none" style="z-index: 10;">
+                                    <small class="fw-bold text-center">Thả ảnh</small>
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 fw-medium">Nhấn hoặc kéo thả để đổi ảnh</small>
+                            <input type="file" name="avatar_file" id="avatar_input" accept="image/*" class="d-none">
+                        </div>
+
+                        <div class="row mb-3 g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Họ và Tên</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
+                                    <input type="text" name="full_name" class="form-control border-start-0 ps-0" value="{{ user.full_name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Địa chỉ Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-muted"></i></span>
+                                    <input type="email" name="email" class="form-control border-start-0 ps-0" value="{{ user.email }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4 g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Số điện thoại</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-phone text-muted"></i></span>
+                                    <input type="tel" name="phone_number" class="form-control border-start-0 ps-0" value="{{ user.phone_number or '' }}" 
+                                           placeholder="VD: 0912345678" pattern="(84|0[3|5|7|8|9])+([0-9]{8})\b" 
+                                           title="Vui lòng nhập số điện thoại hợp lệ (10 số)" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Ngày sinh</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-calendar-alt text-muted"></i></span>
+                                    <input type="date" name="dob" class="form-control border-start-0 ps-0" value="{{ user.date_of_birth or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 bg-light p-4 rounded-3 border">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-label mb-0"><i class="fas fa-map-marker-alt me-2 text-danger"></i>Địa chỉ nhận hàng mặc định</label>
+                                <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill" onclick="toggleAddressEdit()">
+                                    <i class="fas fa-edit me-1"></i> Cập nhật mới
+                                </button>
+                            </div>
+                            
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-white"><i class="fas fa-home text-muted"></i></span>
+                                <input type="text" class="form-control bg-white text-dark fw-medium" value="{{ user.address or 'Chưa thiết lập địa chỉ...' }}" readonly disabled>
+                            </div>
+
+                            <input type="hidden" name="address" id="final_address" value="{{ user.address or '' }}">
+
+                            <div id="edit-addr-section" class="row g-3 mt-2 d-none bg-white p-3 border rounded-3 shadow-sm">
+                                <div class="col-12 text-primary fw-bold small"><i class="fas fa-info-circle me-1"></i>Vui lòng chọn lại địa chỉ mới:</div>
+                                <div class="col-md-4">
+                                    <select id="province" class="form-select text-muted" style="font-size: 0.9rem;">
+                                        <option value="">-- Tỉnh / Thành --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="district" class="form-select text-muted" style="font-size: 0.9rem;" disabled>
+                                        <option value="">-- Quận / Huyện --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="ward" class="form-select text-muted" style="font-size: 0.9rem;" disabled>
+                                        <option value="">-- Phường / Xã --</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <input type="text" id="street" class="form-control" style="font-size: 0.9rem;" placeholder="Nhập số nhà, tên đường, ngõ ngách...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-save shadow">
+                                <i class="fas fa-save me-2"></i>CẬP NHẬT HỒ SƠ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ----- XỬ LÝ ẢNH ĐẠI DIỆN ----- */
+    const avatarContainer = document.getElementById('avatar-container');
+    const avatarInput = document.getElementById('avatar_input');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const dragOverlay = document.getElementById('drag-overlay');
+
+    avatarContainer.addEventListener('click', () => { avatarInput.click(); });
+    avatarInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) { avatarPreview.src = e.target.result; }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    avatarContainer.addEventListener('dragover', (e) => { e.preventDefault(); dragOverlay.classList.remove('d-none'); });
+    avatarContainer.addEventListener('dragleave', (e) => { e.preventDefault(); dragOverlay.classList.add('d-none'); });
+    avatarContainer.addEventListener('drop', (e) => {
+        e.preventDefault(); dragOverlay.classList.add('d-none');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (file.type.startsWith('image/')) {
+                avatarInput.files = e.dataTransfer.files;
+                const reader = new FileReader();
+                reader.onload = function(event) { avatarPreview.src = event.target.result; }
+                reader.readAsDataURL(file);
+            } else {
+                alert('Vui lòng chỉ kéo thả một file ảnh (JPG, PNG)!');
+            }
+        }
+    });
+
+    /* ----- XỬ LÝ CHỌN ĐỊA CHỈ 3 CẤP ----- */
+    let apiData = [];
+
+    // Bật/tắt khu vực chọn địa chỉ
+    function toggleAddressEdit() {
+        const addrSection = document.getElementById('edit-addr-section');
+        addrSection.classList.toggle('d-none');
+        
+        // Nếu mở ra lần đầu thì load API
+        if (!addrSection.classList.contains('d-none') && apiData.length === 0) {
+            loadVietnamProvinces();
+        }
+    }
+
+    async function loadVietnamProvinces() {
+        try {
+            const res = await fetch('https://provinces.open-api.vn/api/?depth=3');
+            apiData = await res.json();
+            const pSelect = document.getElementById('province');
+            apiData.forEach(p => {
+                pSelect.innerHTML += `<option value="${p.code}">${p.name}</option>`;
+            });
+        } catch (error) {
+            console.error("Lỗi tải API Tỉnh thành:", error);
+        }
+    }
+
+    document.getElementById('province').addEventListener('change', function() {
+        const pCode = this.value;
+        const dSelect = document.getElementById('district');
+        const wSelect = document.getElementById('ward');
+        
+        dSelect.innerHTML = '<option value="">-- Quận / Huyện --</option>';
+        wSelect.innerHTML = '<option value="">-- Phường / Xã --</option>';
+        wSelect.disabled = true;
+
+        if(!pCode) { dSelect.disabled = true; return; }
+        
+        dSelect.disabled = false;
+        const province = apiData.find(p => p.code == pCode);
+        province.districts.forEach(d => { dSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`; });
+    });
+
+    document.getElementById('district').addEventListener('change', function() {
+        const pCode = document.getElementById('province').value;
+        const dCode = this.value;
+        const wSelect = document.getElementById('ward');
+        
+        wSelect.innerHTML = '<option value="">-- Phường / Xã --</option>';
+
+        if(!dCode) { wSelect.disabled = true; return; }
+        
+        wSelect.disabled = false;
+        const province = apiData.find(p => p.code == pCode);
+        const district = province.districts.find(d => d.code == dCode);
+        district.wards.forEach(w => { wSelect.innerHTML += `<option value="${w.code}">${w.name}</option>`; });
+    });
+
+    /* Trước khi Submit Form, tự động ghép chuỗi địa chỉ */
+    document.getElementById('profile-form').addEventListener('submit', function(e) {
+        const editSection = document.getElementById('edit-addr-section');
+        
+        // Nếu người dùng có mở bảng cập nhật địa chỉ
+        if (!editSection.classList.contains('d-none')) {
+            const pSel = document.getElementById('province');
+            const dSel = document.getElementById('district');
+            const wSel = document.getElementById('ward');
+            const street = document.getElementById('street').value.trim();
+
+            // Nếu đã mở thì bắt buộc phải nhập đủ
+            if (!pSel.value || !dSel.value || !wSel.value || !street) {
+                e.preventDefault(); // Chặn gửi form
+                alert("Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã và Số nhà!");
+                return;
+            }
+
+            const pName = pSel.options[pSel.selectedIndex].text;
+            const dName = dSel.options[dSel.selectedIndex].text;
+            const wName = wSel.options[wSel.selectedIndex].text;
+
+            // Ghi đè vào biến ẩn final_address
+            document.getElementById('final_address').value = `${street}, ${wName}, ${dName}, ${pName}`;
+        }
+    });
+</script>
+{% endblock %}
