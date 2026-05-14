@@ -52,8 +52,16 @@
         .cat-nav .nav-link:hover, .cat-nav .nav-link.active { background: rgba(255,255,255,0.15); color: #fff !important; border-radius: 4px; }
         .cat-nav .nav-link i { margin-right: 5px; }
 
-        .mega-menu { width: 580px; max-width: 96vw; padding: 20px; border: none; border-radius: 0 0 12px 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); margin-top: 0 !important; }
+        /* ===== MEGA MENU CSS MỚI ===== */
+        .mega-menu { width: 850px; max-width: 96vw; padding: 20px; border: none; border-radius: 0 0 12px 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); margin-top: 0 !important; }
         .mega-menu-header { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); border-bottom: 2px solid var(--primary-light); padding-bottom: 8px; margin-bottom: 12px; }
+        
+        .mega-menu-scroll { max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 8px; }
+        .mega-menu-scroll::-webkit-scrollbar { width: 6px; }
+        .mega-menu-scroll::-webkit-scrollbar-track { background: #f0f7ff; border-radius: 4px; }
+        .mega-menu-scroll::-webkit-scrollbar-thumb { background: #0066b3; border-radius: 4px; opacity: 0.7; }
+        .mega-menu-scroll::-webkit-scrollbar-thumb:hover { background: #004f8c; }
+
         .cat-item { border-radius: 8px; padding: 10px 12px; transition: all 0.2s; cursor: pointer; text-decoration: none; display: flex; align-items: center; color: var(--text-dark); }
         .cat-item:hover { background: var(--primary-light); transform: translateX(3px); color: var(--primary); }
         .cat-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
@@ -161,7 +169,7 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end mt-2">
                             {% if session.get('role') == 'admin' %}
-                                <li><a class="dropdown-item fw-bold text-primary" href="/admin"><i class="fas fa-cogs"></i> Trang quản trị</a></li>
+                                <li><a class="dropdown-item fw-bold text-primary" href="/admin/dashboard"><i class="fas fa-cogs"></i> Trang quản trị</a></li>
                                 <li><hr class="dropdown-divider my-1"></li>
                             {% endif %}
                             <li><a class="dropdown-item" href="/profile"><i class="fas fa-id-card"></i> Hồ sơ cá nhân</a></li>
@@ -190,32 +198,37 @@
                        style="background: rgba(255,255,255,0.15); border-radius: 4px; padding: 9px 14px;">
                         <i class="fas fa-th-large"></i> Danh mục sách
                     </a>
+                    
                     <div class="dropdown-menu shadow-lg mega-menu">
-                        <div class="mega-menu-header">
-                            <i class="fas fa-compass me-2"></i>Khám phá kho tàng tri thức
+                        <div class="mega-menu-header d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-compass me-2"></i>Khám phá kho tàng tri thức</span>
+                            <span class="badge bg-primary rounded-pill" style="font-size: 0.7rem;">{{ category_tree|length }} Danh mục</span>
                         </div>
-                        <div class="row g-1">
-                            {% for cat in category_tree %}
-                            <div class="col-md-6">
-                                <a class="cat-item" href="/category/{{ cat.id }}">
-                                    <div class="cat-icon me-3 shadow-sm">
-                                        {% if 'Tâm' in cat.name or 'Kỹ' in cat.name %}<i class="fas fa-brain"></i>
-                                        {% elif 'Văn' in cat.name %}<i class="fas fa-feather-alt text-success"></i>
-                                        {% elif 'Kinh' in cat.name or 'Tài' in cat.name %}<i class="fas fa-chart-line text-danger"></i>
-                                        {% elif 'Truyện' in cat.name or 'Manga' in cat.name %}<i class="fas fa-mask text-warning"></i>
-                                        {% elif 'Sử' in cat.name or 'Triết' in cat.name %}<i class="fas fa-landmark text-secondary"></i>
-                                        {% elif 'Ngoại' in cat.name or 'Nước' in cat.name %}<i class="fas fa-globe-americas text-info"></i>
-                                        {% else %}<i class="fas fa-book-open"></i>{% endif %}
-                                    </div>
-                                    <div>
-                                        <div class="fw-semibold" style="font-size: 0.9rem;">{{ cat.name }}</div>
-                                    </div>
-                                </a>
+                        
+                        <div class="mega-menu-scroll">
+                            <div class="row g-2">
+                                {% for cat in category_tree %}
+                                <div class="col-lg-3 col-md-4 col-sm-6">
+                                    <a class="cat-item p-2" href="/category/{{ cat.id }}" title="{{ cat.name }}">
+                                        <div class="cat-icon me-2 shadow-sm" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                            {% if 'Tâm' in cat.name or 'Kỹ' in cat.name %}<i class="fas fa-brain"></i>
+                                            {% elif 'Văn' in cat.name %}<i class="fas fa-feather-alt text-success"></i>
+                                            {% elif 'Kinh' in cat.name or 'Tài' in cat.name %}<i class="fas fa-chart-line text-danger"></i>
+                                            {% elif 'Truyện' in cat.name or 'Manga' in cat.name %}<i class="fas fa-mask text-warning"></i>
+                                            {% elif 'Sử' in cat.name or 'Triết' in cat.name %}<i class="fas fa-landmark text-secondary"></i>
+                                            {% elif 'Ngoại' in cat.name or 'Nước' in cat.name %}<i class="fas fa-globe-americas text-info"></i>
+                                            {% else %}<i class="fas fa-book-open"></i>{% endif %}
+                                        </div>
+                                        <div class="w-100 overflow-hidden">
+                                            <div class="fw-semibold text-truncate" style="font-size: 0.85rem;">{{ cat.name }}</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
                         </div>
                     </div>
-                </div>
+                    </div>
 
                 <a class="nav-link ms-2" href="/"><i class="fas fa-home"></i> Trang chủ</a>
                 <a class="nav-link" href="/order-history"><i class="fas fa-truck-fast"></i> Theo dõi đơn hàng</a>

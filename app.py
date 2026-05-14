@@ -11,11 +11,16 @@ from functools import wraps
 from datetime import datetime, timedelta
 import random
 import uuid
+import math
 
 # --- CẤU HÌNH ---
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = 'hmart_bookstore_ai_secret_key_2026'
+
+# --- ĐĂNG KÝ MODULE CHATBOT MỚI ---
+from chatbot import chat_bp
+app.register_blueprint(chat_bp)
 
 # --- KẾT NỐI DATABASE ---
 def get_db():
@@ -62,7 +67,6 @@ def inject_global_data():
             cursor.execute("SELECT COUNT(*) as count FROM notifications WHERE user_id = %s AND `read` = 0", (session['user_id'],))
             data['unread_count'] = cursor.fetchone()['count']
             
-            # ĐÃ BỔ SUNG: Tính tổng số lượng trong Giỏ Hàng từ DB
             cursor.execute("SELECT SUM(quantity) as total_qty FROM carts WHERE user_id = %s", (session['user_id'],))
             qty_res = cursor.fetchone()
             data['cart_count'] = int(qty_res['total_qty']) if qty_res and qty_res['total_qty'] else 0
@@ -359,7 +363,6 @@ def book_detail(book_id):
     
     for b in related_books: b['price'] = float(b['price']) if b['price'] else 0
     
-    # TRUYỀN THÊM BIẾN `images=images` XUỐNG DƯỚI NÀY
     return render_template('product.html', book=book, images=images, related_books=related_books, feedbacks=feedbacks)
 
 @app.route('/search')
@@ -407,60 +410,7 @@ def category_books(cat_id):
     return render_template('index.html', books=books, page_title=f"Danh mục: {cat_name}")
 
 # =========================================================
-# 3. CHATBOT AI OFFLINE
-# =========================================================
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    try:
-        user_msg = request.json.get('message')
-        results = collection.query(query_texts=[user_msg], n_results=2)
-        found_books = []
-        context = ""
-        
-        if results['ids'] and results['ids'][0]:
-            found_ids = results['ids'][0]
-            conn = get_db()
-            cursor = conn.cursor(dictionary=True)
-            fmt = ','.join(['%s'] * len(found_ids))
-            
-            cursor.execute(f"""
-                SELECT p.id, p.title, p.sale_price as price, p.description, c.name as category_name,
-                       (SELECT url FROM image_product WHERE product_id = p.id LIMIT 1) as image_url
-                FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id
-                WHERE p.id IN ({fmt}) AND p.deleted = 0
-            """, tuple(found_ids))
-            found_books = cursor.fetchall()
-            conn.close()
-
-            context_list = []
-            for b in found_books:
-                b['price'] = float(b['price']) if b['price'] else 0
-                cat_name = b['category_name'] or 'Chưa phân loại'
-                context_list.append(f"- Tên sách: {b['title']} (Thể loại: {cat_name}). Giá: {b['price']:,.0f}đ. Nội dung: {b['description']}")
-            context = "\n".join(context_list)
-
-        prompt = f"""Bạn là nhân viên tư vấn bán hàng của nhà sách. Khách hỏi: "{user_msg}"
-        Dữ liệu kho sách hiện tại: 
-        {context}
-        
-        Quy tắc BẮT BUỘC: 
-        1. NẾU CÓ dữ liệu kho ở trên, BẮT BUỘC phải dựa vào đó để giới thiệu cho khách.
-        2. Trả lời tự nhiên, ngắn gọn, thân thiện bằng tiếng Việt."""
-        
-        response = requests.post("http://localhost:11434/api/generate", 
-                               json={"model": "qwen2:1.5b", "prompt": prompt, "stream": False})
-        
-        if response.status_code == 200:
-            ai_reply = response.json().get("response", "Tôi chưa hiểu ý bạn.")
-            return jsonify({"response": ai_reply, "books": found_books})
-        else:
-            return jsonify({"response": "Lỗi kết nối với AI cục bộ.", "books": []})
-    except Exception as e:
-        return jsonify({"response": "Hệ thống AI Offline đang tắt, vui lòng bật Ollama.", "books": []})
-
-# =========================================================
-# 4. GIỎ HÀNG, THANH TOÁN & ĐƠN HÀNG
+# 3. GIỎ HÀNG, THANH TOÁN & ĐƠN HÀNG
 # =========================================================
 
 @app.route('/cart')
@@ -748,7 +698,7 @@ def read_notifications():
     return jsonify({'success': False})
 
 # =========================================================
-# 5. QUẢN TRỊ VIÊN (ADMIN)
+# 4. QUẢN TRỊ VIÊN (ADMIN)
 # =========================================================
 
 @app.route('/admin')
@@ -1031,13 +981,30 @@ def delete_book(id):
     return redirect('/admin/products')
 
 @app.route('/admin/categories')
-@admin_required
 def admin_categories():
-    conn = get_db(); cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM categories")
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect('/login')
+        
+    # Xử lý phân trang
+    page = request.args.get('page', 1, type=int)
+    limit = 10  # Số danh mục hiển thị trên 1 trang
+    offset = (page - 1) * limit
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Đếm tổng số danh mục
+    cursor.execute("SELECT COUNT(*) as total FROM categories")
+    total_cats = cursor.fetchone()['total']
+    total_pages = math.ceil(total_cats / limit)
+    
+    # Lấy danh mục theo trang
+    cursor.execute("SELECT * FROM categories ORDER BY id DESC LIMIT %s OFFSET %s", (limit, offset))
     categories = cursor.fetchall()
+    
     conn.close()
-    return render_template('admin_categories.html', categories=categories)
+    
+    return render_template('admin_categories.html', categories=categories, page=page, total_pages=total_pages)
 
 @app.route('/admin/add-category', methods=['POST'])
 @admin_required

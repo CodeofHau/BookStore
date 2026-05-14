@@ -233,17 +233,27 @@
 
         {% if total_pages and total_pages > 1 %}
         <nav class="mt-5">
-            <ul class="pagination justify-content-center gap-1 mb-0">
+            <ul class="pagination justify-content-center gap-1 mb-0 flex-wrap">
                 <li class="page-item {% if page == 1 %}disabled{% endif %}">
                     <a class="page-link pag-btn" href="?page={{ page - 1 }}&price={{ request.args.get('price', '') }}&keyword={{ request.args.get('keyword', '') }}">
                         <i class="fas fa-chevron-left me-1"></i>Trước
                     </a>
                 </li>
+                
                 {% for p in range(1, total_pages + 1) %}
-                <li class="page-item">
-                    <a class="page-link pag-btn {% if p == page %}pag-active{% endif %}" href="?page={{ p }}&price={{ request.args.get('price', '') }}&keyword={{ request.args.get('keyword', '') }}">{{ p }}</a>
-                </li>
+                    {# Chỉ hiển thị trang 1, trang cuối, và các trang lân cận trang hiện tại #}
+                    {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                    <li class="page-item">
+                        <a class="page-link pag-btn {% if p == page %}pag-active{% endif %}" href="?page={{ p }}&price={{ request.args.get('price', '') }}&keyword={{ request.args.get('keyword', '') }}">{{ p }}</a>
+                    </li>
+                    {# Hiển thị dấu ... cho các khoảng cách #}
+                    {% elif p == page - 3 or p == page + 3 %}
+                    <li class="page-item disabled">
+                        <span class="page-link pag-btn border-0 bg-transparent text-muted px-2">...</span>
+                    </li>
+                    {% endif %}
                 {% endfor %}
+
                 <li class="page-item {% if page == total_pages %}disabled{% endif %}">
                     <a class="page-link pag-btn" href="?page={{ page + 1 }}&price={{ request.args.get('price', '') }}&keyword={{ request.args.get('keyword', '') }}">
                         Sau<i class="fas fa-chevron-right ms-1"></i>
