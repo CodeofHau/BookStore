@@ -145,6 +145,11 @@
     .total-final .value { font-size: 1.45rem; font-weight: 800; color: var(--secondary); }
     .security-note { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted); margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
     .security-note i { color: #16a34a; }
+    
+    /* Hiệu ứng success/error modal */
+    .alert-icon-wrapper { width: 80px; height: 80px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+    .alert-icon-wrapper.success { background: #e8fff0; color: #16a34a; }
+    .alert-icon-wrapper.error { background: #fff0f0; color: #c0031a; }
 </style>
 
 <div class="checkout-hero">
@@ -349,12 +354,46 @@
     </div>
 </div>
 
+<div class="modal fade" id="systemAlertModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg text-center" style="border-radius: 16px;">
+            <div class="modal-body p-4 pt-5 pb-4" id="systemAlertBody">
+                </div>
+        </div>
+    </div>
+</div>
+
 <script>
     let cartData = [];
     let subTotal = 0;
     let discount = 0;
     let currentCouponCode = null;
-    let apiData = []; // Dữ liệu Tỉnh thành VN
+    let apiData = []; 
+
+    // --- HÀM THÔNG BÁO MODAL MỚI (Thay thế alert) ---
+    const alertModal = new bootstrap.Modal(document.getElementById('systemAlertModal'));
+    const alertBody = document.getElementById('systemAlertBody');
+
+    function showSystemAlert(type, title, message, callback = null) {
+        let iconClass = type === 'success' ? 'success' : 'error';
+        let iconHtml = type === 'success' ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
+        
+        alertBody.innerHTML = `
+            <div class="alert-icon-wrapper ${iconClass}">${iconHtml}</div>
+            <h5 class="fw-bold text-dark mb-2">${title}</h5>
+            <p class="text-muted mb-4" style="font-size: 0.9rem; line-height: 1.6;">${message}</p>
+            ${type === 'error' ? '<button class="btn btn-primary w-100 rounded-pill fw-bold py-2" data-bs-dismiss="modal">Trở lại</button>' : ''}
+        `;
+        alertModal.show();
+        
+        // Nếu là success, tự động tắt và chạy callback (chuyển trang) sau 2 giây
+        if (type === 'success' && callback) {
+            setTimeout(() => {
+                alertModal.hide();
+                callback();
+            }, 2000);
+        }
+    }
 
     function formatVND(amount) {
         return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
@@ -409,10 +448,7 @@
         wSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
         wSelect.disabled = true;
 
-        if(!pCode) {
-            dSelect.disabled = true;
-            return;
-        }
+        if(!pCode) { dSelect.disabled = true; return; }
         
         dSelect.disabled = false;
         const province = apiData.find(p => p.code == pCode);
@@ -429,10 +465,7 @@
         
         wSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
 
-        if(!dCode) {
-            wSelect.disabled = true;
-            return;
-        }
+        if(!dCode) { wSelect.disabled = true; return; }
         
         wSelect.disabled = false;
         const province = apiData.find(p => p.code == pCode);
@@ -452,8 +485,8 @@
             subTotal = 0;
 
             if (cartData.length === 0) {
-                alert("Giỏ hàng trống!");
-                window.location.href = "/";
+                showSystemAlert('error', 'Giỏ hàng trống', 'Bạn chưa có sản phẩm nào trong giỏ hàng.');
+                setTimeout(() => { window.location.href = "/"; }, 1500);
                 return;
             }
 
@@ -479,7 +512,7 @@
 
     async function applyCoupon() {
         const code = document.getElementById('coupon-input').value.trim();
-        if (!code) { alert('Vui lòng nhập mã giảm giá!'); return; }
+        if (!code) { showSystemAlert('error', 'Lỗi nhập liệu', 'Vui lòng nhập mã giảm giá!'); return; }
         try {
             const res = await fetch('/api/apply-coupon', {
                 method: 'POST',
@@ -489,17 +522,26 @@
             const result = await res.json();
             if (result.success) {
                 currentCouponCode = code;
-                discount = subTotal * (result.discount_percent / 100);
+                
+                let discountAmount = subTotal * (result.discount_percent / 100);
+                
+                if (result.max_discount && result.max_discount > 0 && discountAmount > result.max_discount) {
+                    discountAmount = result.max_discount;
+                    showSystemAlert('success', 'Tuyệt vời!', `Đã giảm ${result.discount_percent}%, tối đa ${formatVND(result.max_discount)}`);
+                } else {
+                    showSystemAlert('success', 'Tuyệt vời!', `Áp dụng thành công mã giảm ${result.discount_percent}%`);
+                }
+                
+                discount = discountAmount;
                 document.getElementById('discount-row').classList.remove('d-none');
                 updateUI();
-                alert(`✅ Áp dụng mã thành công! Giảm ${result.discount_percent}%`);
             } else {
-                alert('❌ ' + result.message);
+                showSystemAlert('error', 'Áp dụng thất bại', result.message);
                 discount = 0; currentCouponCode = null;
                 document.getElementById('discount-row').classList.add('d-none');
                 updateUI();
             }
-        } catch { alert("Lỗi kết nối máy chủ!"); }
+        } catch { showSystemAlert('error', 'Lỗi hệ thống', 'Không thể kết nối với máy chủ!'); }
     }
 
     function updateUI() {
@@ -512,6 +554,14 @@
     // XỬ LÝ KHI BẤM ĐẶT HÀNG
     document.getElementById('checkout-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // 1. KIỂM TRA VALIDATE SỐ ĐIỆN THOẠI (Regex 10 số VN)
+        const phoneVal = document.getElementById('phone').value.trim();
+        const phoneRegex = /^0[35789][0-9]{8}$/;
+        if (!phoneRegex.test(phoneVal)) {
+            showSystemAlert('error', 'Lỗi nhập liệu', 'Vui lòng nhập số điện thoại hợp lệ! (10 số, bắt đầu bằng 03, 05, 07, 08, hoặc 09)');
+            return;
+        }
         
         let finalAddress = "";
         const addrTypeEl = document.querySelector('input[name="addressType"]:checked');
@@ -526,7 +576,7 @@
             const street = document.getElementById('street').value.trim();
 
             if (!pSel.value || !dSel.value || !wSel.value || !street) {
-                alert("Vui lòng chọn Tỉnh/Thành và nhập đầy đủ địa chỉ chi tiết!");
+                showSystemAlert('error', 'Thiếu thông tin', 'Vui lòng chọn Tỉnh/Thành và nhập đầy đủ địa chỉ chi tiết!');
                 return;
             }
 
@@ -540,19 +590,18 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Đang xử lý...</span>';
 
-        // LẤY HÌNH THỨC THANH TOÁN (cod hoặc banking/vnpay)
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
         let finalAmount = Math.max(0, subTotal - discount);
 
         const orderData = {
             name: document.getElementById('fullName').value,
-            phone: document.getElementById('phone').value,
+            phone: phoneVal,
             address: finalAddress,
             note: document.getElementById('note').value,
             items: cartData,
             total: finalAmount,
             coupon_code: currentCouponCode,
-            payment_method: paymentMethod // <-- ĐÃ BỔ SUNG GỬI DỮ LIỆU NÀY LÊN MÁY CHỦ
+            payment_method: paymentMethod 
         };
 
         try {
@@ -562,27 +611,30 @@
                 body: JSON.stringify(orderData)
             });
             const result = await res.json();
+            
+            // 2. HIỂN THỊ THÔNG BÁO BẰNG MODAL THAY CHO ALERT
             if (result.success) {
-                if (paymentMethod === 'banking' || paymentMethod === 'vnpay') {
-                    alert(`✅ Đặt hàng thành công! Đang chuyển sang trang quét mã QR...`);
-                    window.location.href = `/payment/${result.order_id}`;
+                if (paymentMethod === 'banking') {
+                    showSystemAlert('success', 'Đơn hàng đã được ghi nhận!', 'Hệ thống đang chuyển bạn sang trang quét mã QR thanh toán.', () => {
+                        window.location.href = `/payment/${result.order_id}`;
+                    });
                 } else {
-                    alert(`✅ Đặt hàng thành công! Mã đơn: #${result.order_id}`);
-                    window.location.href = "/order-history";
+                    showSystemAlert('success', 'Đặt hàng thành công!', `Mã đơn hàng của bạn là #${result.order_id.substring(0, 8).toUpperCase()}. Chúng tôi sẽ giao hàng sớm nhất!`, () => {
+                        window.location.href = "/order-history";
+                    });
                 }
             } else {
-                alert("❌ Lỗi đặt hàng: " + result.message);
+                showSystemAlert('error', 'Rất tiếc', result.message);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-lock"></i><span>XÁC NHẬN ĐẶT HÀNG</span>';
             }
         } catch {
-            alert("❌ Lỗi kết nối Server!");
+            showSystemAlert('error', 'Lỗi đường truyền', 'Không thể kết nối với máy chủ. Vui lòng kiểm tra lại mạng!');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-lock"></i><span>XÁC NHẬN ĐẶT HÀNG</span>';
         }
     });
 
-    // Khởi chạy khi load trang
     loadItems();
     loadVietnamProvinces();
 </script>

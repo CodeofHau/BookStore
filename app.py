@@ -290,26 +290,86 @@ def index():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
+    # 1. Lấy danh sách Galeries (Banner) và Danh mục
+    cursor.execute("SELECT g.image, g.product_id, p.title FROM galeries g LEFT JOIN products p ON g.product_id = p.id ORDER BY g.id DESC")
+    galeries = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM categories")
+    categories = cursor.fetchall()
+
+    # 2. XỬ LÝ HỆ THỐNG GỢI Ý SÁCH BẰNG AI (RECOMMENDATION SYSTEM)
+    ai_recommendations = []
+    if 'user_id' in session:
+        try:
+            # Tìm cuốn sách gần nhất mà user này đã mua
+            cursor.execute("""
+                SELECT p.id, p.title, p.description 
+                FROM order_detail od
+                JOIN orders o ON od.order_id = o.id
+                JOIN products p ON od.product_id = p.id
+                WHERE o.user_id = %s
+                ORDER BY o.orderDate DESC LIMIT 1 
+            """, (session['user_id'],))
+            last_bought = cursor.fetchone()
+
+            if last_bought:
+                # Dùng ChromaDB để nhúng nội dung và tìm sách tương đồng (Vector Search)
+                search_query = f"Tìm các sách tương tự với: {last_bought['title']}. Nội dung: {last_bought['description']}"
+                
+                chroma_client = chromadb.PersistentClient(path="./chroma_db")
+                ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+                collection = chroma_client.get_collection(name="books_search", embedding_function=ef)
+                
+                results = collection.query(query_texts=[search_query], n_results=5)
+                
+                if results['ids'] and results['ids'][0]:
+                    # Loại bỏ chính cuốn sách đã mua ra khỏi danh sách
+                    similar_ids = [bid for bid in results['ids'][0] if bid != last_bought['id']][:4]
+                    
+                    if similar_ids:
+                        format_strings = ','.join(['%s'] * len(similar_ids))
+                        cursor.execute(f"""
+                            SELECT p.id, p.title, p.sale_price as price, p.origin_price, p.description, 
+                                   c.name as category_name,
+                                   (SELECT url FROM image_product WHERE product_id = p.id LIMIT 1) as image_url
+                            FROM products p 
+                            LEFT JOIN categories c ON p.category_id = c.id
+                            WHERE p.id IN ({format_strings})
+                        """, tuple(similar_ids))
+                        ai_recommendations = cursor.fetchall()
+                        
+                        # Ép kiểu giá tiền
+                        for b in ai_recommendations:
+                            b['price'] = float(b['price']) if b['price'] else 0
+        except Exception as e:
+            print("Lỗi hệ thống gợi ý AI:", e)
+
+    # 3. TRUY VẤN VÀ PHÂN TRANG DANH SÁCH SÁCH CHÍNH
     cursor.execute(f"SELECT COUNT(*) as total FROM products p WHERE p.deleted = 0 {price_cond}")
     total_books = cursor.fetchone()['total']
     total_pages = (total_books + per_page - 1) // per_page
+    if total_pages == 0: total_pages = 1
 
     cursor.execute(f"""
-        SELECT p.id, p.title, p.sale_price as price, p.origin_price,
+        SELECT p.id, p.title, p.sale_price as price, p.origin_price, p.stock,
                (SELECT url FROM image_product WHERE product_id = p.id LIMIT 1) as image_url
         FROM products p WHERE p.deleted = 0 {price_cond} ORDER BY p.id DESC LIMIT %s OFFSET %s
     """, (per_page, offset))
     books = cursor.fetchall()
     
-    cursor.execute("""
-        SELECT g.image, g.product_id, p.title 
-        FROM galeries g LEFT JOIN products p ON g.product_id = p.id
-    """)
-    galeries = cursor.fetchall()
     conn.close()
     
-    for b in books: b['price'] = float(b['price']) if b['price'] else 0
-    return render_template('index.html', books=books, page=page, total_pages=total_pages, galeries=galeries)
+    # Ép kiểu dữ liệu giá cho danh sách chính
+    for b in books: 
+        b['price'] = float(b['price']) if b['price'] else 0
+
+    return render_template('index.html', 
+                           books=books, 
+                           galeries=galeries, 
+                           category_tree=categories, 
+                           page=page, 
+                           total_pages=total_pages,
+                           ai_recommendations=ai_recommendations)
 
 @app.route('/book/<string:book_id>')
 def book_detail(book_id):
@@ -529,10 +589,11 @@ def apply_coupon():
     if coupon:
         return jsonify({
             'success': True, 
-            'discount_percent': float(coupon['discount'])
+            'discount_percent': float(coupon['discount']),
+            'max_discount': float(coupon.get('max_discount', 0)) # TRẢ VỀ GIỚI HẠN
         })
     else:
-        return jsonify({'success': False, 'message': 'Mã không hợp lệ hoặc đã hết hạn.'})
+        return jsonify({'success': False, 'message': 'Mã không hợp lệ, đã hết lượt hoặc hết hạn.'})
 
 @app.route('/api/save-order', methods=['POST'])
 def save_order():
@@ -541,20 +602,29 @@ def save_order():
     conn = get_db(); cursor = conn.cursor()
     order_id = str(uuid.uuid4())
     
-    # LẤY HÌNH THỨC THANH TOÁN TỪ GIAO DIỆN (Nếu không có thì mặc định là cod)
     payment_method = data.get('payment_method', 'cod')
+    coupon_code = data.get('coupon_code')
     
-    # ĐƯA payment_method VÀO CÂU LỆNH INSERT
     cursor.execute("""
         INSERT INTO orders (id, user_id, full_name, phone_number, address, total_money, status, coupon_code, payment_method) 
         VALUES (%s, %s, %s, %s, %s, %s, 'Chờ xác nhận', %s, %s)
-    """, (order_id, session['user_id'], data['name'], data['phone'], data['address'], data['total'], data.get('coupon_code'), payment_method))
+    """, (order_id, session['user_id'], data['name'], data['phone'], data['address'], data['total'], coupon_code, payment_method))
     
     for item in data['items']:
         cursor.execute("""
             INSERT INTO order_detail (id, order_id, product_id, price, quantity, total_money) 
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (str(uuid.uuid4()), order_id, item['id'], item['price'], item['quantity'], float(item['price']) * int(item['quantity'])))
+        
+        # TRỪ TỒN KHO SẢN PHẨM
+        cursor.execute("""
+            UPDATE products SET stock = stock - %s WHERE id = %s
+        """, (int(item['quantity']), item['id']))
+        
+    # TRỪ SỐ LƯỢNG MÃ GIẢM GIÁ (NẾU CÓ DÙNG)
+    if coupon_code:
+        cursor.execute("UPDATE coupons SET quantity = quantity - 1 WHERE code = %s AND quantity > 0", (coupon_code,))
+        cursor.execute("UPDATE coupons SET expired = 1 WHERE code = %s AND quantity <= 0", (coupon_code,)) # Tự vô hiệu hóa nếu hết mã
         
     cursor.execute("DELETE FROM carts WHERE user_id = %s", (session['user_id'],))
     conn.commit(); conn.close()
@@ -656,10 +726,24 @@ def payment_page(order_id):
 @app.route('/api/submit-feedback', methods=['POST'])
 def submit_feedback():
     if 'user_id' not in session: return jsonify({'success': False, 'message': 'Vui lòng đăng nhập'})
-    data = request.json
-    product_id = data.get('product_id')
-    rating = int(data.get('rating', 5))
-    comment = data.get('comment', '')
+    
+    # Vì có gửi file ảnh, ta dùng request.form thay vì request.json
+    product_id = request.form.get('product_id')
+    rating = int(request.form.get('rating', 5))
+    comment = request.form.get('comment', '')
+    
+    # Xử lý lưu ảnh nếu khách có upload
+    image_path = ''
+    if 'image_file' in request.files:
+        file = request.files['image_file']
+        if file and file.filename != '':
+            upload_folder = os.path.join('static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            filename = secure_filename(f"feedback_{uuid.uuid4().hex[:8]}_{file.filename}")
+            filepath = os.path.join(upload_folder, filename)
+            file.save(filepath)
+            image_path = f"/{filepath}".replace("\\", "/")
+
     new_feedback_id = str(uuid.uuid4())
     try:
         conn = get_db()
@@ -667,7 +751,7 @@ def submit_feedback():
         cursor.execute("""
             INSERT INTO feedbacks (id, product_id, user_id, note, star, image)
             VALUES (%s, %s, %s, %s, %s, %s)
-        """, (new_feedback_id, product_id, session['user_id'], comment, rating, ''))
+        """, (new_feedback_id, product_id, session['user_id'], comment, rating, image_path))
         conn.commit()
         conn.close()
         return jsonify({'success': True, 'message': 'Đánh giá thành công!'})
@@ -678,7 +762,7 @@ def submit_feedback():
             cursor.execute("""
                 INSERT INTO FEEDBACK (id, product_id, user_id, note, star, image)
                 VALUES (%s, %s, %s, %s, %s, %s)
-            """, (new_feedback_id, product_id, session['user_id'], comment, rating, ''))
+            """, (new_feedback_id, product_id, session['user_id'], comment, rating, image_path))
             conn.commit()
             conn.close()
             return jsonify({'success': True, 'message': 'Đánh giá thành công!'})
@@ -897,6 +981,7 @@ def add_book():
         desc = request.form['description']
         origin_price = float(request.form['origin_price'])
         sale_price = float(request.form['price'])
+        stock = int(request.form.get('stock', 50))
         category_id = request.form.get('category_id') or None
 
         image_path = ""
@@ -914,9 +999,9 @@ def add_book():
         conn = get_db(); cursor = conn.cursor()
         
         cursor.execute("""
-            INSERT INTO products (id, title, description, sale_price, origin_price, category_id, deleted)
-            VALUES (%s, %s, %s, %s, %s, %s, 0)
-        """, (product_id, title, desc, sale_price, origin_price, category_id))
+            INSERT INTO products (id, title, description, sale_price, origin_price, category_id, stock, deleted)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 0)
+        """, (product_id, title, desc, sale_price, origin_price, category_id, stock))
 
         cursor.execute("INSERT INTO image_product (id, product_id, url) VALUES (%s, %s, %s)",
                        (str(uuid.uuid4()), product_id, image_path))
@@ -939,6 +1024,7 @@ def edit_book(id):
         desc = request.form['description']
         origin_price = float(request.form['origin_price'])
         sale_price = float(request.form['price'])
+        stock = int(request.form.get('stock', 0))
         category_id = request.form.get('category_id') or None
 
         image_path = None
@@ -953,9 +1039,8 @@ def edit_book(id):
                 image_path = f"/{filepath}".replace("\\", "/")
 
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute("UPDATE products SET title=%s, description=%s, origin_price=%s, sale_price=%s, category_id=%s WHERE id=%s", 
-                       (title, desc, origin_price, sale_price, category_id, id))
-
+        cursor.execute("UPDATE products SET title=%s, description=%s, origin_price=%s, sale_price=%s, category_id=%s, stock=%s WHERE id=%s", 
+                       (title, desc, origin_price, sale_price, category_id, stock, id))
         if image_path:
             cursor.execute("UPDATE image_product SET url=%s WHERE product_id=%s LIMIT 1", (image_path, id))
         conn.commit(); conn.close()
@@ -985,23 +1070,32 @@ def admin_categories():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
         
-    # Xử lý phân trang
+    # Lấy trang hiện tại và từ khóa tìm kiếm
     page = request.args.get('page', 1, type=int)
-    limit = 10  # Số danh mục hiển thị trên 1 trang
+    keyword = request.args.get('keyword', '').strip()
+    limit = 10  
     offset = (page - 1) * limit
     
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    # Đếm tổng số danh mục
-    cursor.execute("SELECT COUNT(*) as total FROM categories")
-    total_cats = cursor.fetchone()['total']
-    total_pages = math.ceil(total_cats / limit)
-    
-    # Lấy danh mục theo trang
-    cursor.execute("SELECT * FROM categories ORDER BY id DESC LIMIT %s OFFSET %s", (limit, offset))
+    if keyword:
+        # Nếu có tìm kiếm
+        search_term = f"%{keyword}%"
+        cursor.execute("SELECT COUNT(*) as total FROM categories WHERE name LIKE %s", (search_term,))
+        total_cats = cursor.fetchone()['total']
+        total_pages = math.ceil(total_cats / limit) if total_cats > 0 else 1
+        
+        cursor.execute("SELECT * FROM categories WHERE name LIKE %s ORDER BY id DESC LIMIT %s OFFSET %s", (search_term, limit, offset))
+    else:
+        # Nếu không tìm kiếm (hiển thị tất cả)
+        cursor.execute("SELECT COUNT(*) as total FROM categories")
+        total_cats = cursor.fetchone()['total']
+        total_pages = math.ceil(total_cats / limit) if total_cats > 0 else 1
+        
+        cursor.execute("SELECT * FROM categories ORDER BY id DESC LIMIT %s OFFSET %s", (limit, offset))
+        
     categories = cursor.fetchall()
-    
     conn.close()
     
     return render_template('admin_categories.html', categories=categories, page=page, total_pages=total_pages)
@@ -1108,8 +1202,19 @@ def update_order_status(order_id):
         if order['status'] in ['Đã giao', 'Đã hủy']:
             flash('Đơn hàng đã hoàn tất hoặc bị hủy, không thể thay đổi trạng thái!', 'danger')
         else:
+            # 1. Cập nhật trạng thái đơn hàng
             cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (new_status, order_id))
             
+            # 2. TỰ ĐỘNG HOÀN KHO NẾU ĐƠN BỊ HỦY
+            if new_status == 'Đã hủy':
+                cursor.execute("SELECT product_id, quantity FROM order_detail WHERE order_id = %s", (order_id,))
+                items = cursor.fetchall()
+                for item in items:
+                    cursor.execute("""
+                        UPDATE products SET stock = stock + %s WHERE id = %s
+                    """, (item['quantity'], item['product_id']))
+            
+            # 3. Gửi thông báo cho khách hàng
             if order['user_id']:
                 notif_id = str(uuid.uuid4())
                 content = f"Đơn hàng #{order_id[:8]} đã chuyển sang trạng thái: {new_status}"
@@ -1120,6 +1225,7 @@ def update_order_status(order_id):
                     """, (notif_id, order['user_id'], content))
                 except Exception as e:
                     print(f"Lỗi thêm thông báo: {e}")
+                    
             conn.commit()
             flash(f'Đã cập nhật trạng thái đơn hàng thành: {new_status}', 'success')
 
@@ -1223,15 +1329,16 @@ def admin_coupons():
 def add_coupon():
     code = request.form.get('code').strip().upper()
     discount = float(request.form.get('discount', 0))
+    max_discount = float(request.form.get('max_discount', 0))
     quantity = int(request.form.get('quantity', 0))
     expiration_date = request.form.get('expiration_date')
     
     conn = get_db(); cursor = conn.cursor()
     try:
         cursor.execute("""
-            INSERT INTO coupons (code, discount, expiration_date, expired, quantity)
-            VALUES (%s, %s, %s, 0, %s)
-        """, (code, discount, expiration_date, quantity))
+            INSERT INTO coupons (code, discount, max_discount, expiration_date, expired, quantity)
+            VALUES (%s, %s, %s, %s, 0, %s)
+        """, (code, discount, max_discount, expiration_date, quantity))
         conn.commit()
         flash('Đã thêm mã giảm giá!', 'success')
     except Exception as e:
@@ -1244,9 +1351,10 @@ def add_coupon():
 @admin_required
 def edit_coupon(code):
     expired = 1 if request.form.get('expired') else 0
+    max_discount = float(request.form.get('max_discount', 0))
     conn = get_db(); cursor = conn.cursor()
-    cursor.execute("UPDATE coupons SET discount=%s, quantity=%s, expiration_date=%s, expired=%s WHERE code=%s",
-                   (request.form.get('discount'), request.form.get('quantity'), request.form.get('expiration_date'), expired, code))
+    cursor.execute("UPDATE coupons SET discount=%s, max_discount=%s, quantity=%s, expiration_date=%s, expired=%s WHERE code=%s",
+                   (request.form.get('discount'), max_discount, request.form.get('quantity'), request.form.get('expiration_date'), expired, code))
     conn.commit(); conn.close()
     flash('Đã cập nhật mã giảm giá!', 'success')
     return redirect('/admin/coupons')

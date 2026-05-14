@@ -13,7 +13,6 @@
             --primary-dark: #004f8c;
             --primary-light: #e8f4ff;
             --secondary: #e8041c;
-            --accent: #ff6600;
             --text-dark: #1a1a2e;
             --text-muted: #6b7280;
             --bg-light: #f0f7ff;
@@ -52,16 +51,14 @@
         .cat-nav .nav-link:hover, .cat-nav .nav-link.active { background: rgba(255,255,255,0.15); color: #fff !important; border-radius: 4px; }
         .cat-nav .nav-link i { margin-right: 5px; }
 
-        /* ===== MEGA MENU CSS MỚI ===== */
+        /* ===== MEGA MENU CSS ===== */
         .mega-menu { width: 850px; max-width: 96vw; padding: 20px; border: none; border-radius: 0 0 12px 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); margin-top: 0 !important; }
         .mega-menu-header { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); border-bottom: 2px solid var(--primary-light); padding-bottom: 8px; margin-bottom: 12px; }
-        
         .mega-menu-scroll { max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 8px; }
         .mega-menu-scroll::-webkit-scrollbar { width: 6px; }
         .mega-menu-scroll::-webkit-scrollbar-track { background: #f0f7ff; border-radius: 4px; }
         .mega-menu-scroll::-webkit-scrollbar-thumb { background: #0066b3; border-radius: 4px; opacity: 0.7; }
         .mega-menu-scroll::-webkit-scrollbar-thumb:hover { background: #004f8c; }
-
         .cat-item { border-radius: 8px; padding: 10px 12px; transition: all 0.2s; cursor: pointer; text-decoration: none; display: flex; align-items: center; color: var(--text-dark); }
         .cat-item:hover { background: var(--primary-light); transform: translateX(3px); color: var(--primary); }
         .cat-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
@@ -73,11 +70,13 @@
         .dropdown-item i { width: 20px; color: var(--primary); }
         main { min-height: 80vh; }
         
+        /* Alert */
         .alert { border-radius: 8px; border: none; }
         .alert-success { background: #e8fff0; color: #166534; }
         .alert-danger { background: #fff0f0; color: #991b1b; }
         .alert-warning { background: #fffbeb; color: #92400e; }
 
+        /* ===== FOOTER GỐC CỦA BẠN ===== */
         footer { background: #0d1b3e; color: rgba(255,255,255,0.75); }
         footer h5 { color: #fff; font-weight: 700; margin-bottom: 16px; }
         footer a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
@@ -98,9 +97,15 @@
         .user-msg { background: var(--primary); color: #fff; border-radius: 12px 0 12px 12px; padding: 10px 14px; margin: 10px; font-size: 0.88rem; max-width: 85%; margin-left: auto; line-height: 1.5; }
         .chat-footer { background: #fff; }
         .chat-footer input { font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.88rem; }
-
+        
         .notif-btn { background: none; border: none; color: #fff; position: relative; padding: 6px 10px; }
         .notif-badge { position: absolute; top: 0; right: 0; background: var(--secondary); color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+        /* ===== SYSTEM ALERT MODAL (NEW) ===== */
+        .alert-icon-wrapper { width: 80px; height: 80px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+        .alert-icon-wrapper.success { background: #e8fff0; color: #16a34a; }
+        .alert-icon-wrapper.error { background: #fff0f0; color: #c0031a; }
+        .alert-icon-wrapper.info { background: #e8f4ff; color: var(--primary); }
 
         @media (max-width: 768px) { .topbar { display: none; } .search-wrapper { max-width: 100%; } #chat-window { width: calc(100vw - 20px); right: 10px; } }
     </style>
@@ -228,7 +233,7 @@
                             </div>
                         </div>
                     </div>
-                    </div>
+                </div>
 
                 <a class="nav-link ms-2" href="/"><i class="fas fa-home"></i> Trang chủ</a>
                 <a class="nav-link" href="/order-history"><i class="fas fa-truck-fast"></i> Theo dõi đơn hàng</a>
@@ -303,6 +308,14 @@
         </div>
     </footer>
 
+    <div class="modal fade" id="systemAlertModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg text-center" style="border-radius: 16px;">
+                <div class="modal-body p-4 pt-5 pb-4" id="systemAlertBody"></div>
+            </div>
+        </div>
+    </div>
+
     <button id="chat-btn" onclick="toggleChat()" title="Chat với AI tư vấn sách">
         <i class="fas fa-robot fa-lg"></i>
     </button>
@@ -333,6 +346,55 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        /* ===== HỆ THỐNG GỌI MODAL DÙNG CHUNG ===== */
+        let alertModal;
+        document.addEventListener("DOMContentLoaded", function() {
+            alertModal = new bootstrap.Modal(document.getElementById('systemAlertModal'));
+        });
+
+        // Hàm thông báo 1 nút Đóng
+        function showSystemAlert(type, title, message, callback = null) {
+            const alertBody = document.getElementById('systemAlertBody');
+            let iconClass = type === 'success' ? 'success' : 'error';
+            let iconHtml = type === 'success' ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
+            
+            alertBody.innerHTML = `
+                <div class="alert-icon-wrapper ${iconClass}">${iconHtml}</div>
+                <h5 class="fw-bold text-dark mb-2">${title}</h5>
+                <p class="text-muted mb-4" style="font-size: 0.9rem; line-height: 1.6;">${message}</p>
+                ${type === 'error' || !callback ? '<button class="btn btn-primary w-100 rounded-pill fw-bold py-2" data-bs-dismiss="modal">Đóng</button>' : ''}
+            `;
+            alertModal.show();
+            
+            if (type === 'success' && callback) {
+                setTimeout(() => { alertModal.hide(); callback(); }, 2000);
+            } else if (callback) {
+                const modalEl = document.getElementById('systemAlertModal');
+                const onHidden = function() { callback(); modalEl.removeEventListener('hidden.bs.modal', onHidden); };
+                modalEl.addEventListener('hidden.bs.modal', onHidden);
+            }
+        }
+
+        // Hàm thông báo 2 nút (Hỏi xác nhận)
+        function showSystemConfirm(title, message, confirmCallback) {
+            const alertBody = document.getElementById('systemAlertBody');
+            alertBody.innerHTML = `
+                <div class="alert-icon-wrapper info"><i class="fas fa-question"></i></div>
+                <h5 class="fw-bold text-dark mb-2">${title}</h5>
+                <p class="text-muted mb-4" style="font-size: 0.9rem; line-height: 1.6;">${message}</p>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light w-50 rounded-pill fw-bold py-2 border" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-primary w-50 rounded-pill fw-bold py-2" id="btn-confirm-action">Xác nhận</button>
+                </div>
+            `;
+            alertModal.show();
+            document.getElementById('btn-confirm-action').onclick = function() {
+                alertModal.hide();
+                if(confirmCallback) confirmCallback();
+            };
+        }
+
+        /* ===== CHATBOT SCRIPT ===== */
         function toggleChat() {
             const w = document.getElementById('chat-window');
             w.style.display = (w.style.display === 'flex') ? 'none' : 'flex';

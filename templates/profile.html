@@ -50,29 +50,28 @@
 
                         <div class="row mb-3 g-4">
                             <div class="col-md-6">
-                                <label class="form-label">Họ và Tên</label>
+                                <label class="form-label">Họ và Tên <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
                                     <input type="text" name="full_name" class="form-control border-start-0 ps-0" value="{{ user.full_name }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Địa chỉ Email</label>
+                                <label class="form-label">Địa chỉ Email <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-muted"></i></span>
-                                    <input type="email" name="email" class="form-control border-start-0 ps-0" value="{{ user.email }}" required>
+                                    <input type="email" name="email" id="email_input" class="form-control border-start-0 ps-0" value="{{ user.email }}" required>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row mb-4 g-4">
                             <div class="col-md-6">
-                                <label class="form-label">Số điện thoại</label>
+                                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0"><i class="fas fa-phone text-muted"></i></span>
-                                    <input type="tel" name="phone_number" class="form-control border-start-0 ps-0" value="{{ user.phone_number or '' }}" 
-                                           placeholder="VD: 0912345678" pattern="(84|0[3|5|7|8|9])+([0-9]{8})\b" 
-                                           title="Vui lòng nhập số điện thoại hợp lệ (10 số)" required>
+                                    <input type="tel" name="phone_number" id="phone_input" class="form-control border-start-0 ps-0" value="{{ user.phone_number or '' }}" 
+                                           placeholder="VD: 0912345678" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -171,12 +170,9 @@
     /* ----- XỬ LÝ CHỌN ĐỊA CHỈ 3 CẤP ----- */
     let apiData = [];
 
-    // Bật/tắt khu vực chọn địa chỉ
     function toggleAddressEdit() {
         const addrSection = document.getElementById('edit-addr-section');
         addrSection.classList.toggle('d-none');
-        
-        // Nếu mở ra lần đầu thì load API
         if (!addrSection.classList.contains('d-none') && apiData.length === 0) {
             loadVietnamProvinces();
         }
@@ -226,20 +222,38 @@
         district.wards.forEach(w => { wSelect.innerHTML += `<option value="${w.code}">${w.name}</option>`; });
     });
 
-    /* Trước khi Submit Form, tự động ghép chuỗi địa chỉ */
+    /* ----- VALIDATE TRƯỚC KHI SUBMIT ----- */
     document.getElementById('profile-form').addEventListener('submit', function(e) {
+        // 1. Validate Email (Phải có dạng xx@yy.zz)
+        const emailVal = document.getElementById('email_input').value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(emailVal)) {
+            e.preventDefault();
+            alert("Vui lòng nhập đúng định dạng email (ví dụ: ten@gmail.com)!");
+            document.getElementById('email_input').focus();
+            return;
+        }
+
+        // 2. Validate Số điện thoại (10 số chuẩn VN: 03, 05, 07, 08, 09)
+        const phoneVal = document.getElementById('phone_input').value.trim();
+        const phoneRegex = /^0[35789][0-9]{8}$/;
+        if (!phoneRegex.test(phoneVal)) {
+            e.preventDefault();
+            alert("Vui lòng nhập số điện thoại hợp lệ! (10 số, bắt đầu bằng 03, 05, 07, 08, hoặc 09)");
+            document.getElementById('phone_input').focus();
+            return;
+        }
+
+        // 3. Validate Địa chỉ
         const editSection = document.getElementById('edit-addr-section');
-        
-        // Nếu người dùng có mở bảng cập nhật địa chỉ
         if (!editSection.classList.contains('d-none')) {
             const pSel = document.getElementById('province');
             const dSel = document.getElementById('district');
             const wSel = document.getElementById('ward');
             const street = document.getElementById('street').value.trim();
 
-            // Nếu đã mở thì bắt buộc phải nhập đủ
             if (!pSel.value || !dSel.value || !wSel.value || !street) {
-                e.preventDefault(); // Chặn gửi form
+                e.preventDefault();
                 alert("Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã và Số nhà!");
                 return;
             }
@@ -248,7 +262,6 @@
             const dName = dSel.options[dSel.selectedIndex].text;
             const wName = wSel.options[wSel.selectedIndex].text;
 
-            // Ghi đè vào biến ẩn final_address
             document.getElementById('final_address').value = `${street}, ${wName}, ${dName}, ${pName}`;
         }
     });

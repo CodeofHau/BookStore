@@ -162,6 +162,10 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-muted">Cảm nhận của bạn</label>
                     <textarea id="review-comment" class="form-control" rows="4" placeholder="Sách nội dung hay, giao hàng nhanh..." style="border-radius: 8px; border-color: #e2e8f0;"></textarea>
+                    <div class="mb-3">
+                    <label class="form-label fw-semibold small text-muted">Thêm ảnh (tùy chọn)</label>
+                    <input type="file" id="review-image" class="form-control" accept="image/*" style="border-radius: 8px; border-color: #e2e8f0;">
+                </div>
                 </div>
                 <button class="btn w-100 py-2 fw-bold" style="background: var(--secondary); color: white; border-radius: 8px;" onclick="submitReview()">
                     GỬI ĐÁNH GIÁ
@@ -191,22 +195,29 @@
     });
 
     async function submitReview() {
-        if(currentRating === 0) { alert("Vui lòng chọn số sao (từ 1 đến 5)!"); return; }
-        const res = await fetch('/api/submit-feedback', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                product_id: currentProductId,
-                rating: currentRating,
-                comment: document.getElementById('review-comment').value
-            })
-        });
-        const data = await res.json();
-        if(data.success) { 
-            alert("Cảm ơn bạn đã đánh giá!"); 
-            location.reload(); 
-        } else { 
-            alert("Lỗi gửi đánh giá!"); 
+        if(currentRating === 0) { 
+            showSystemAlert('error', 'Chưa chọn mức độ', 'Vui lòng chọn số sao (từ 1 đến 5)!'); 
+            return; 
+        }
+        const formData = new FormData();
+        formData.append('product_id', currentProductId);
+        formData.append('rating', currentRating);
+        formData.append('comment', document.getElementById('review-comment').value);
+        
+        const fileInput = document.getElementById('review-image');
+        if (fileInput && fileInput.files.length > 0) { formData.append('image_file', fileInput.files[0]); }
+
+        try {
+            const res = await fetch('/api/submit-feedback', { method: 'POST', body: formData });
+            const data = await res.json();
+            if(data.success) { 
+                bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                showSystemAlert('success', 'Thành công', 'Cảm ơn bạn đã gửi đánh giá!', () => location.reload());
+            } else { 
+                showSystemAlert('error', 'Thất bại', 'Có lỗi xảy ra khi gửi đánh giá!');
+            }
+        } catch {
+            showSystemAlert('error', 'Lỗi đường truyền', 'Không thể kết nối với máy chủ!');
         }
     }
 </script>

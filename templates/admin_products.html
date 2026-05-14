@@ -20,6 +20,8 @@
         
         .table > :not(caption) > * > * { padding: 12px 8px; vertical-align: middle; }
         .product-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+        .pagination .page-link { border: none; color: #6c757d; margin: 0 2px; border-radius: 50% !important; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+        .pagination .page-item.active .page-link { background-color: #0d6efd; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -71,10 +73,11 @@
                             <option value="{{ cat.id }}" {% if request.args.get('category_id') == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
                         {% endfor %}
                     </select>
-                    <input type="text" name="product_code" value="{{ request.args.get('product_code', '') }}" class="form-control" placeholder="Tìm theo mã sản phẩm" style="width: 180px;">
-                    <input type="text" name="product_name" value="{{ request.args.get('product_name', '') }}" class="form-control" placeholder="Tìm theo tên sản phẩm" style="width: 250px;">
+                    <input type="text" name="product_code" value="{{ request.args.get('product_code', '') }}" class="form-control" placeholder="Mã sản phẩm" style="width: 150px;">
+                    <input type="text" name="product_name" value="{{ request.args.get('product_name', '') }}" class="form-control" placeholder="Tên sản phẩm" style="width: 220px;">
                     
-                    <button type="submit" class="btn btn-outline-primary px-4" style="background-color: #e9f0fc; border-color: #d0e1fd; color: #0d6efd;">Tìm kiếm</button>
+                    <button type="submit" class="btn btn-primary px-3">Tìm kiếm</button>
+                    <a href="/admin/products" class="btn btn-light border"><i class="fas fa-sync-alt"></i></a>
                 </form>
             </div>
 
@@ -85,11 +88,11 @@
                             <th>#</th>
                             <th>Mã sản phẩm</th>
                             <th>Ảnh</th>
-                            <th class="text-start">Tên sản phẩm <i class="fas fa-sort ms-1 text-muted"></i></th>
+                            <th class="text-start">Tên sản phẩm</th>
                             <th>Tên danh mục</th>
-                            <th>Giá gốc</th>
-                            <th>Giá bán <i class="fas fa-sort ms-1 text-muted"></i></th>
-                            <th>Giảm giá <i class="fas fa-sort ms-1 text-muted"></i></th>
+                            <th>Giá bán</th>
+                            <th>Tồn kho</th>
+                            <th>Giảm giá</th>
                             <th>Chức năng</th>
                         </tr>
                     </thead>
@@ -99,21 +102,17 @@
                             <td class="fw-bold">{{ loop.index + ((page - 1) * 10) }}</td>
                             <td class="text-secondary">BOOK-{{ book.id[:6] }}</td>
                             <td><img src="{{ book.image_url }}" class="product-img" alt="img"></td>
-                            <td class="text-start fw-semibold text-truncate" style="max-width: 250px;" title="{{ book.title }}">{{ book.title }}</td>
+                            <td class="text-start fw-semibold text-truncate" style="max-width: 200px;" title="{{ book.title }}">{{ book.title }}</td>
                             <td>{{ book.category_name or 'Chưa phân loại' }}</td>
                             
-                            <td class="text-muted text-decoration-line-through">
-                                {% if book.origin_price %}
-                                    {{ "{:,.0f}".format(book.origin_price) }} đ
-                                {% else %}
-                                    -
-                                {% endif %}
+                            <td class="text-danger fw-bold">{{ "{:,.0f}".format(book.price) }}đ</td>
+
+                            <td class="fw-bold {% if book.stock <= 5 %}text-danger{% else %}text-success{% endif %}">
+                                {{ book.stock }}
                             </td>
                             
-                            <td class="text-danger fw-bold">{{ "{:,.0f}".format(book.price) }} đ</td>
-                            
                             <td>
-                                {% if book.origin_price and book.origin_price > 0 and book.origin_price > book.price %}
+                                {% if book.origin_price and book.origin_price > book.price %}
                                     <span class="badge bg-danger">
                                         -{{ ((book.origin_price - book.price) / book.origin_price * 100) | round | int }}%
                                     </span>
@@ -144,29 +143,32 @@
                                                     <label class="form-label fw-bold">Tên sách</label>
                                                     <input type="text" name="title" value="{{ book.title }}" class="form-control" required>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
+                                                <div class="col-md-4 mb-3">
                                                     <label class="form-label fw-bold">Giá gốc</label>
-                                                    <input type="number" name="origin_price" value="{{ book.origin_price | int }}" class="form-control text-muted text-decoration-line-through" required>
+                                                    <input type="number" name="origin_price" value="{{ book.origin_price | int }}" class="form-control" required>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold text-danger">Giá bán (Khuyến mãi)</label>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold text-danger">Giá bán</label>
                                                     <input type="number" name="price" value="{{ book.price | int }}" class="form-control text-danger fw-bold" required>
                                                 </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold text-success">Tồn kho</label>
+                                                    <input type="number" name="stock" value="{{ book.stock }}" class="form-control text-success fw-bold" required>
+                                                </div>
                                                 <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Đổi ảnh bìa mới <span class="text-muted">(Tùy chọn)</span></label>
+                                                    <label class="form-label fw-bold">Ảnh bìa (Tùy chọn)</label>
                                                     <input type="file" name="image_file" class="form-control" accept="image/*">
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label fw-bold">Danh mục</label>
                                                     <select name="category_id" class="form-select" required>
-                                                        <option value="">-- Chọn danh mục --</option>
                                                         {% for cat in categories %}
                                                             <option value="{{ cat.id }}" {% if cat.id == book.category_id %}selected{% endif %}>{{ cat.name }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
                                                 <div class="col-12 mb-3">
-                                                    <label class="form-label fw-bold">Mô tả nội dung</label>
+                                                    <label class="form-label fw-bold">Mô tả</label>
                                                     <textarea name="description" class="form-control" rows="4" required>{{ book.description }}</textarea>
                                                 </div>
                                             </div>
@@ -182,29 +184,30 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                {% if not books %}
-                <div class="text-center py-4 text-muted">Không tìm thấy sản phẩm nào phù hợp.</div>
-                {% endif %}
             </div>
 
             {% if total_pages > 1 %}
             <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center mt-4 border-0">
+                <ul class="pagination justify-content-center mt-4 flex-wrap gap-1">
                     {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link border-0 text-muted" href="{{ url_for('admin_products', page=page-1, category_id=request.args.get('category_id'), product_code=request.args.get('product_code'), product_name=request.args.get('product_name')) }}"><i class="fas fa-chevron-left"></i></a>
+                        <a class="page-link" href="{{ url_for('admin_products', page=page-1, category_id=request.args.get('category_id'), product_code=request.args.get('product_code'), product_name=request.args.get('product_name')) }}"><i class="fas fa-chevron-left"></i></a>
                     </li>
                     {% endif %}
                     
                     {% for p in range(1, total_pages + 1) %}
-                    <li class="page-item {% if p == page %}active{% endif %}">
-                        <a class="page-link border-0 {% if p == page %}bg-light text-dark fw-bold rounded-circle{% else %}text-muted{% endif %}" href="{{ url_for('admin_products', page=p, category_id=request.args.get('category_id'), product_code=request.args.get('product_code'), product_name=request.args.get('product_name')) }}">{{ p }}</a>
-                    </li>
+                        {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                        <li class="page-item {% if p == page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_products', page=p, category_id=request.args.get('category_id'), product_code=request.args.get('product_code'), product_name=request.args.get('product_name')) }}">{{ p }}</a>
+                        </li>
+                        {% elif p == page - 3 or p == page + 3 %}
+                        <li class="page-item disabled"><span class="page-link bg-transparent">...</span></li>
+                        {% endif %}
                     {% endfor %}
                     
                     {% if page < total_pages %}
                     <li class="page-item">
-                        <a class="page-link border-0 text-muted" href="{{ url_for('admin_products', page=page+1, category_id=request.args.get('category_id'), product_code=request.args.get('product_code'), product_name=request.args.get('product_name')) }}"><i class="fas fa-chevron-right"></i></a>
+                        <a class="page-link" href="{{ url_for('admin_products', page=page+1, category_id=request.args.get('category_id'), product_code=request.args.get('product_code'), product_name=request.args.get('product_name')) }}"><i class="fas fa-chevron-right"></i></a>
                     </li>
                     {% endif %}
                 </ul>
@@ -214,8 +217,6 @@
         </div>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <div class="modal fade" id="addProductModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -231,20 +232,24 @@
                             <label class="form-label fw-bold">Tên sách <span class="text-danger">*</span></label>
                             <input type="text" name="title" class="form-control" required>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">Giá gốc <span class="text-danger">*</span></label>
                             <input type="number" name="origin_price" class="form-control" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold text-danger">Giá bán (Khuyến mãi) <span class="text-danger">*</span></label>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold text-danger">Giá bán <span class="text-danger">*</span></label>
                             <input type="number" name="price" class="form-control" required>
                         </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold text-success">Tồn kho <span class="text-danger">*</span></label>
+                            <input type="number" name="stock" class="form-control" value="50" required>
+                        </div>
                         <div class="col-12 mb-3">
-                            <label class="form-label fw-bold">Mô tả sách (Kèm Tác giả) <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">Mô tả <span class="text-danger">*</span></label>
                             <textarea name="description" class="form-control" rows="3" required></textarea>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Tải file ảnh bìa lên <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">Ảnh bìa <span class="text-danger">*</span></label>
                             <input type="file" name="image_file" class="form-control" accept="image/*" required>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -267,5 +272,6 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

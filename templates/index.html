@@ -125,6 +125,48 @@
     </div>
 </section>
 
+{# ===== HỆ THỐNG GỢI Ý AI (RECOMMENDATION) ===== #}
+        {% if session.get('user_id') and ai_recommendations and ai_recommendations|length > 0 %}
+        <section class="py-4 mt-4" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+            <div class="container">
+                <div class="d-flex align-items-center mb-3">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #ffd700, #ff8c00); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3);">
+                        <i class="fas fa-magic text-white fs-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0" style="color: #1a1a2e; font-size: 1.4rem;">Gợi Ý Dành Riêng Cho Bạn</h3>
+                        <p class="text-muted mb-0" style="font-size: 0.85rem;"><i class="fas fa-robot me-1"></i>Được phân tích bởi AI dựa trên sở thích mua sắm của bạn</p>
+                    </div>
+                </div>
+
+                <div class="row row-cols-2 row-cols-md-4 g-3 mt-2">
+                    {% for book in ai_recommendations %}
+                    <div class="col">
+                        <div class="book-card card h-100 border-0 position-relative overflow-hidden" style="border: 2px solid #ffd700 !important; box-shadow: 0 8px 20px rgba(255,215,0,0.15) !important;">
+                            <span class="position-absolute" style="top:0;right:0;background:#ffd700;color:#000;padding:4px 12px;font-size:0.75rem;font-weight:bold;border-bottom-left-radius:10px;z-index:10;"><i class="fas fa-star me-1"></i>Top Match</span>
+                            <div class="book-img-wrap text-center" style="background:#fff;padding:16px 12px 10px;">
+                                <a href="/book/{{ book.id }}" class="text-decoration-none d-block">
+                                    <img src="{{ book.image_url }}" class="book-cover-img" alt="{{ book.title }}" style="height:200px;width:100%;object-fit:contain;">
+                                </a>
+                            </div>
+                            <div class="card-body d-flex flex-column p-3">
+                                <h6 class="book-title-text fw-bold mb-1 text-truncate" title="{{ book.title }}" style="font-size:0.88rem;">
+                                    <a href="/book/{{ book.id }}" class="text-decoration-none text-dark stretched-link">{{ book.title }}</a>
+                                </h6>
+                                <p class="text-muted mb-auto" style="font-size:0.78rem;">{{ book.category_name or 'Đề xuất AI' }}</p>
+                                <div class="mt-2">
+                                    <div class="fw-bold" style="color:#e8041c;font-size:1rem;">{{ "{:,.0f}".format(book.price) }}đ</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+        {# ===== KẾT THÚC PHẦN GỢI Ý ===== #}
+
 {# ===== DANH SÁCH SÁCH VÀ BỘ LỌC GIÁ ===== #}
 <section class="py-5" id="book-list">
     <div class="container">
