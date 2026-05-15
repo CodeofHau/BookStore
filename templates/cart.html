@@ -2,6 +2,11 @@
 
 {% block content %}
 <style>
+    /* Ẩn mũi tên lên xuống của thẻ input number */
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .qty-input { -moz-appearance: textfield; }
+
     .cart-header { color: var(--primary-dark); font-weight: 800; border-left: 5px solid var(--primary); padding-left: 15px; }
     .cart-img { width: 75px; height: 105px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
     .table-cart th { background-color: var(--bg-light); color: var(--primary-dark); font-weight: 600; border-bottom: 2px solid var(--border); border-top: none; padding: 15px 10px; }
@@ -9,7 +14,7 @@
     .qty-input-group { width: 110px; background: #fff; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; }
     .qty-btn { background: var(--bg-light); border: none; color: var(--primary-dark); width: 32px; transition: 0.2s; }
     .qty-btn:hover { background: var(--primary); color: white; }
-    .qty-input { border: none; text-align: center; font-weight: 600; color: var(--text-dark); background: transparent; padding: 0; }
+    .qty-input { border: none; text-align: center; font-weight: 600; color: var(--text-dark); background: transparent; padding: 0; outline: none;}
     
     .total-section { background-color: #fff; padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,102,179,0.05); }
     .btn-checkout { background-color: var(--secondary); color: white; border-radius: 8px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s; border: none; }
@@ -95,6 +100,7 @@
                     <a href="/" class="btn btn-primary btn-sm rounded-pill mt-3 px-4">Mua sắm ngay</a>
                 </td></tr>`;
                 updateTotal(0);
+                showSystemAlert('error', 'Giỏ hàng trống', 'Giỏ hàng của bạn đang trống!', () => { window.location.href = "/"; });
                 return;
             }
 
@@ -115,7 +121,11 @@
                         <td>
                             <div class="qty-input-group d-flex mx-auto">
                                 <button class="qty-btn" onclick="updateItem('${item.id}', 'decrease')"><i class="fas fa-minus fs-7"></i></button>
-                                <input type="text" class="form-control qty-input" value="${item.quantity}" readonly>
+                                
+                                <input type="number" class="form-control qty-input px-1" value="${item.quantity}" min="1" 
+                                       onchange="updateItemQuantity('${item.id}', this.value)" 
+                                       style="text-align:center; border:none; background:transparent;">
+                                
                                 <button class="qty-btn" onclick="updateItem('${item.id}', 'increase')"><i class="fas fa-plus fs-7"></i></button>
                             </div>
                         </td>
@@ -142,16 +152,44 @@
         document.getElementById('final-total').innerText = formatCurrency(amount);
     }
 
+    // Hàm gọi khi KHÁCH NHẬP SỐ BẰNG TAY
+    async function updateItemQuantity(bookId, newQty) {
+        let val = parseInt(newQty);
+        if (isNaN(val) || val < 1) val = 1;
+        
+        try {
+            const response = await fetch('/api/update-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId, action: 'set', quantity: val })
+            });
+            const data = await response.json();
+            
+            if (!data.success && data.message) {
+                showSystemAlert('error', 'Giới hạn kho', data.message);
+            }
+            loadCart(); 
+        } catch (error) {
+            showSystemAlert('error', 'Lỗi hệ thống', 'Có lỗi xảy ra khi cập nhật!');
+        }
+    }
+
+    // Hàm gọi khi KHÁCH BẤM NÚT CỘNG/TRỪ
     async function updateItem(bookId, action) {
         try {
-            await fetch('/api/update-cart', {
+            const response = await fetch('/api/update-cart', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ book_id: bookId, action: action })
             });
+            const data = await response.json();
+            
+            if (!data.success && data.message) {
+                showSystemAlert('error', 'Giới hạn kho', data.message);
+            }
             loadCart(); 
         } catch (error) {
-            alert('Có lỗi xảy ra!');
+            showSystemAlert('error', 'Lỗi hệ thống', 'Có lỗi xảy ra khi cập nhật giỏ hàng!');
         }
     }
 

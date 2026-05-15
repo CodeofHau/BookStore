@@ -2,76 +2,387 @@
 
 {% block content %}
 
-{# ===== HERO BANNER CAROUSEL CÓ THỂ VUỐT/BẤM VÀ TỰ ĐỘNG CHẠY ===== #}
-<div id="bannerCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000" style="margin-bottom: 0;">
-    
-    {% if galeries|length > 1 %}
-    <div class="carousel-indicators">
-        {% for banner in galeries %}
-        <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="true"></button>
-        {% endfor %}
-    </div>
-    {% endif %}
+{# ===== HERO BANNER CAROUSEL — REDESIGNED ===== #}
+<style>
+/* ===== BANNER WRAPPER ===== */
+.hero-carousel-wrap {
+    position: relative;
+    width: 100%;
+    background: #0d1b3e;
+    overflow: hidden;
+    /* Subtle shadow separator below carousel */
+    box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+}
 
-    <div class="carousel-inner">
-        {% if galeries|length == 0 %}
+/* ===== CAROUSEL ITEM ===== */
+#bannerCarousel .carousel-item {
+    height: 480px;
+}
+@media (max-width: 768px) {
+    #bannerCarousel .carousel-item { height: 260px; }
+}
+
+/* ===== IMAGE WRAPPER — Ken Burns zoom effect ===== */
+.banner-img-wrap {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+.banner-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.06);
+    transition: transform 6s ease;
+    will-change: transform;
+}
+.carousel-item.active .banner-img-wrap img {
+    transform: scale(1.0);
+}
+
+/* ===== CINEMATIC OVERLAYS ===== */
+/* Left vignette — không che ảnh sản phẩm, chỉ thêm chiều sâu */
+.banner-overlay-left {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        105deg,
+        rgba(0,20,60,0.72) 0%,
+        rgba(0,20,60,0.38) 42%,
+        rgba(0,20,60,0.0) 70%
+    );
+    z-index: 2;
+    pointer-events: none;
+}
+/* Bottom shadow for grounding */
+.banner-overlay-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 120px;
+    background: linear-gradient(transparent, rgba(0,15,50,0.5));
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ===== SLIDE TEXT CONTENT ===== */
+.banner-text-block {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 5;
+    padding: 0 0 0 6%;
+    max-width: 480px;
+    opacity: 0;
+    transform: translateY(-44%) translateX(-18px);
+    transition: opacity 0.7s ease 0.25s, transform 0.7s ease 0.25s;
+}
+.carousel-item.active .banner-text-block {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+.banner-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,215,0,0.18);
+    border: 1px solid rgba(255,215,0,0.5);
+    color: #ffd700;
+    padding: 4px 14px;
+    border-radius: 30px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+    margin-bottom: 12px;
+}
+.banner-title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+@media (max-width: 768px) {
+    .banner-title { font-size: 1.15rem; }
+    .banner-text-block { max-width: 62%; padding-left: 4%; }
+    .banner-label { font-size: 0.62rem; padding: 3px 10px; }
+    .banner-cta { font-size: 0.78rem !important; padding: 8px 16px !important; }
+}
+.banner-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #0066b3, #0088e0);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 11px 22px;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(0,102,179,0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 14px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+}
+.banner-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,102,179,0.55);
+    color: #fff;
+}
+
+/* ===== INDICATORS — Pill style ===== */
+#bannerCarousel .carousel-indicators {
+    bottom: 18px;
+    gap: 6px;
+    margin: 0;
+    justify-content: center;
+    z-index: 10;
+}
+#bannerCarousel .carousel-indicators [data-bs-target] {
+    width: 24px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.4);
+    border: none;
+    opacity: 1;
+    transition: width 0.4s ease, background 0.3s ease;
+    margin: 0;
+    flex-shrink: 0;
+}
+#bannerCarousel .carousel-indicators .active {
+    width: 44px;
+    background: #fff;
+}
+
+/* ===== NAV ARROWS — glass pill ===== */
+.banner-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    text-decoration: none;
+}
+.banner-nav-btn:hover {
+    background: rgba(0,102,179,0.6);
+    border-color: rgba(0,102,179,0.8);
+    color: #fff;
+    transform: translateY(-50%) scale(1.08);
+}
+.banner-nav-prev { left: 16px; }
+.banner-nav-next { right: 16px; }
+
+/* ===== SLIDE COUNTER badge ===== */
+.banner-counter {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    z-index: 10;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(6px);
+    color: rgba(255,255,255,0.85);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    letter-spacing: 0.5px;
+}
+
+/* ===== DEFAULT HERO (no banners) ===== */
+.hero-orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; }
+.hero-orb-1 { width: 320px; height: 320px; background: rgba(0,136,224,0.28); top: -80px; left: -60px; animation: orb-drift 8s ease-in-out infinite; }
+.hero-orb-2 { width: 260px; height: 260px; background: rgba(255,215,0,0.12); bottom: -60px; right: 15%; animation: orb-drift 10s ease-in-out infinite 2s; }
+.hero-orb-3 { width: 200px; height: 200px; background: rgba(0,80,180,0.22); top: 30%; right: -40px; animation: orb-drift 7s ease-in-out infinite 1s; }
+.hero-orb-4 { width: 150px; height: 150px; background: rgba(255,80,80,0.1); bottom: 20%; left: 30%; animation: orb-drift 9s ease-in-out infinite 3s; }
+@keyframes orb-drift { 0%,100%{transform:translate(0,0);} 33%{transform:translate(20px,-15px);} 66%{transform:translate(-10px,20px);} }
+
+.floating-icon { position: absolute; animation: icon-float 6s ease-in-out infinite; }
+@keyframes icon-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+
+.hero-shimmer {
+    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
+    animation: shimmer-pass 6s ease-in-out infinite 2s;
+    pointer-events: none;
+}
+@keyframes shimmer-pass { 0%{left:-100%;} 100%{left:200%;} }
+
+.animate-fadein { animation: fadein-up 0.7s both; }
+@keyframes fadein-up { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+.hero-gold-text { color: #ffd700; }
+.hero-btn-primary {
+    display: inline-flex; align-items: center;
+    background: linear-gradient(135deg, #e8041c, #c0031a);
+    color: #fff; font-weight: 700; font-size: 0.95rem;
+    padding: 12px 24px; border-radius: 10px; text-decoration: none;
+    box-shadow: 0 6px 20px rgba(232,4,28,0.35);
+    transition: all 0.25s ease;
+}
+.hero-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(232,4,28,0.45); color:#fff; }
+.hero-btn-ghost {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; font-size: 0.95rem;
+    padding: 12px 22px; border-radius: 10px; text-decoration: none;
+    border: 1.5px solid rgba(255,255,255,0.35); backdrop-filter: blur(6px);
+    transition: all 0.25s ease;
+}
+.hero-btn-ghost:hover { background: rgba(255,255,255,0.22); color: #fff; transform: translateY(-2px); border-color: rgba(255,255,255,0.6); }
+.hero-stat { display: flex; flex-direction: column; align-items: flex-start; padding: 6px 14px; background: rgba(255,255,255,0.1); border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(4px); }
+.hero-stat-num { font-size: 1.15rem; font-weight: 800; color: #ffd700; line-height: 1.2; }
+.hero-stat-label { font-size: 0.72rem; color: rgba(255,255,255,0.75); font-weight: 500; }
+.hero-book-stack { position: relative; width: 180px; height: 200px; }
+.hbs-card { position: absolute; width: 130px; height: 160px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
+.hbs-back { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); top: 30px; left: 40px; transform: rotate(12deg); animation: card-float 5s ease-in-out infinite 1s; }
+.hbs-mid { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); top: 18px; left: 20px; transform: rotate(-5deg); animation: card-float 5s ease-in-out infinite 0.5s; }
+.hbs-front { background: rgba(0,80,160,0.7); border: 1.5px solid rgba(255,215,0,0.35); top: 0; left: 0; z-index: 3; animation: card-float 5s ease-in-out infinite; backdrop-filter: blur(8px); }
+@keyframes card-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+</style>
+
+<div class="hero-carousel-wrap">
+    <div id="bannerCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+
+        {% if galeries|length > 1 %}
+        <div class="carousel-indicators">
+            {% for banner in galeries %}
+            <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="{{ loop.index0 }}"
+                    {% if loop.first %}class="active" aria-current="true"{% endif %}></button>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="carousel-inner">
+            {# ===== NO BANNERS: DEFAULT HERO ===== #}
+            {% if galeries|length == 0 %}
             <div class="carousel-item active">
-                <div class="hero-banner position-relative overflow-hidden" style="height: 420px; background: linear-gradient(135deg, #0066b3 0%, #004f8c 50%, #003366 100%);">
-                    <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:rgba(255,255,255,0.04);top:-150px;right:-100px;"></div>
-                    <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.06);bottom:-100px;left:-50px;"></div>
-                    <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,215,0,0.08);top:50px;left:40%;"></div>
-
-                    <div class="container h-100 d-flex align-items-center position-relative" style="z-index:2;">
+                <div class="position-relative overflow-hidden" style="height:480px;background:linear-gradient(135deg,#0077cc 0%,#0055a5 40%,#003b7a 100%);">
+                    <div class="hero-orb hero-orb-1"></div>
+                    <div class="hero-orb hero-orb-2"></div>
+                    <div class="hero-orb hero-orb-3"></div>
+                    <div class="hero-orb hero-orb-4"></div>
+                    <div class="floating-icon" style="top:15%;left:8%;animation-delay:0s;"><i class="fas fa-book" style="color:rgba(255,215,0,0.25);font-size:1.6rem;"></i></div>
+                    <div class="floating-icon" style="top:65%;left:5%;animation-delay:1.5s;"><i class="fas fa-bookmark" style="color:rgba(255,255,255,0.2);font-size:1.2rem;"></i></div>
+                    <div class="floating-icon" style="top:25%;right:6%;animation-delay:0.8s;"><i class="fas fa-graduation-cap" style="color:rgba(255,215,0,0.2);font-size:1.8rem;"></i></div>
+                    <div class="floating-icon" style="top:70%;right:10%;animation-delay:2s;"><i class="fas fa-feather-alt" style="color:rgba(255,255,255,0.18);font-size:1.4rem;"></i></div>
+                    <div class="hero-shimmer"></div>
+                    <div class="container h-100 d-flex align-items-center position-relative" style="z-index:2;height:480px!important;">
                         <div class="row align-items-center w-100 g-4">
                             <div class="col-lg-7">
-                                <div class="hero-badge mb-3">
-                                    <span style="background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.4);color:#ffd700;padding:5px 14px;border-radius:20px;font-size:0.78rem;font-weight:600;letter-spacing:0.5px;">
+                                <div class="hero-badge mb-3 animate-fadein" style="animation-delay:0.1s;">
+                                    <span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.45);color:#ffd700;padding:6px 16px;border-radius:20px;font-size:0.78rem;font-weight:700;letter-spacing:0.8px;backdrop-filter:blur(4px);">
                                         <i class="fas fa-robot me-1"></i> TÍCH HỢP TRỢ LÝ AI
                                     </span>
                                 </div>
-                                <h1 class="fw-800 text-white mb-3" style="font-size:2.6rem;line-height:1.2;font-weight:800;">
+                                <h1 class="fw-800 text-white mb-3 animate-fadein" style="font-size:2.7rem;line-height:1.18;font-weight:800;animation-delay:0.2s;">
                                     Khám Phá Tri Thức<br>
-                                    Cùng <span style="color:#ffd700;">BookStore AI</span>
+                                    Cùng <span class="hero-gold-text">BookStore AI</span>
                                 </h1>
-                                <p class="text-white mb-4" style="opacity:0.85;font-size:1rem;line-height:1.7;max-width:520px;">
+                                <p class="text-white mb-4 animate-fadein" style="opacity:0.88;font-size:1rem;line-height:1.75;max-width:520px;animation-delay:0.35s;">
                                     Hệ thống mua sách thông minh tích hợp trợ lý ảo. Chỉ cần đưa ra ý tưởng — chúng tôi sẽ tìm cuốn sách thay đổi cuộc đời bạn!
                                 </p>
-                                <div class="d-flex gap-3 flex-wrap">
-                                    <a href="#book-list" class="btn btn-warning btn-lg fw-bold px-4 rounded-3 shadow" style="background:#ffd700;border:none;color:#1a1a2e;">
-                                        <i class="fas fa-book-open me-2"></i>Khám Phá Ngay
-                                    </a>
+                                <div class="d-flex gap-3 flex-wrap animate-fadein" style="animation-delay:0.5s;">
+                                    <a href="#book-list" class="hero-btn-primary"><i class="fas fa-book-open me-2"></i>Khám Phá Ngay</a>
+                                    <a href="#" class="hero-btn-ghost" onclick="document.getElementById('chat-btn').click();return false;"><i class="fas fa-robot me-2"></i>Hỏi AI Tư Vấn</a>
+                                </div>
+                                <div class="d-flex gap-4 mt-4 animate-fadein" style="animation-delay:0.65s;">
+                                    <div class="hero-stat"><span class="hero-stat-num">50K+</span><span class="hero-stat-label">Đầu sách</span></div>
+                                    <div class="hero-stat"><span class="hero-stat-num">200K+</span><span class="hero-stat-label">Khách hàng</span></div>
+                                    <div class="hero-stat"><span class="hero-stat-num">4.9★</span><span class="hero-stat-label">Đánh giá</span></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 d-none d-lg-flex justify-content-center align-items-center">
+                                <div class="hero-book-stack">
+                                    <div class="hbs-card hbs-back"><i class="fas fa-book" style="font-size:2rem;color:rgba(255,215,0,0.7);"></i></div>
+                                    <div class="hbs-card hbs-mid"><i class="fas fa-book-open" style="font-size:2.2rem;color:rgba(255,255,255,0.9);"></i></div>
+                                    <div class="hbs-card hbs-front"><i class="fas fa-robot" style="font-size:2.5rem;color:#ffd700;"></i><div style="font-size:0.75rem;color:rgba(255,255,255,0.9);margin-top:8px;font-weight:600;">AI Gợi Ý</div></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        {% else %}
-            {% for banner in galeries %}
-            <div class="carousel-item {% if loop.first %}active{% endif %}">
-                {% if banner.product_id %}
-                    <a href="/book/{{ banner.product_id }}">
-                        <img src="{{ banner.image }}" class="d-block w-100" style="height: 420px; object-fit: cover;" alt="Banner Khuyến Mãi">
-                    </a>
-                {% else %}
-                    <img src="{{ banner.image }}" class="d-block w-100" style="height: 420px; object-fit: cover;" alt="Banner Sự Kiện">
-                {% endif %}
-            </div>
-            {% endfor %}
-        {% endif %}
-    </div>
 
-    {% if galeries|length > 1 %}
-    <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon bg-dark rounded-circle p-3 shadow" style="opacity: 0.6;" aria-hidden="true"></span>
-        <span class="visually-hidden">Trước</span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon bg-dark rounded-circle p-3 shadow" style="opacity: 0.6;" aria-hidden="true"></span>
-        <span class="visually-hidden">Sau</span>
-    </button>
-    {% endif %}
-</div>
+            {# ===== HAS BANNERS: CINEMATIC SLIDES ===== #}
+            {% else %}
+                {% for banner in galeries %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <div class="position-relative" style="height:480px;">
+                        {# Background image with Ken Burns #}
+                        <div class="banner-img-wrap">
+                            <img src="{{ banner.image }}" alt="Banner">
+                        </div>
+
+                        {# Cinematic overlays #}
+                        <div class="banner-overlay-left"></div>
+                        <div class="banner-overlay-bottom"></div>
+
+                        {# Text block — only show if there's a product link #}
+                        {% if banner.product_id %}
+                        <div class="banner-text-block">
+                            <div class="banner-label">
+                                <i class="fas fa-fire"></i> Khuyến mãi đặc biệt
+                            </div>
+                            {% if banner.product_name %}
+                            <div class="banner-title">{{ banner.product_name }}</div>
+                            {% endif %}
+                            <a href="/book/{{ banner.product_id }}" class="banner-cta">
+                                <i class="fas fa-eye"></i> Xem ngay
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {# Clickable link wrapper #}
+                        {% if banner.product_id %}
+                        <a href="/book/{{ banner.product_id }}" class="position-absolute" style="inset:0;z-index:4;" aria-label="Xem sản phẩm"></a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>{# /carousel-inner #}
+
+        {# Navigation arrows #}
+        {% if galeries|length > 1 %}
+        <a class="banner-nav-btn banner-nav-prev" href="#bannerCarousel" data-bs-slide="prev" role="button">
+            <i class="fas fa-chevron-left" style="font-size:0.85rem;margin-left:-1px;"></i>
+        </a>
+        <a class="banner-nav-btn banner-nav-next" href="#bannerCarousel" data-bs-slide="next" role="button">
+            <i class="fas fa-chevron-right" style="font-size:0.85rem;margin-right:-1px;"></i>
+        </a>
+
+        {# Slide counter #}
+        <div class="banner-counter" id="bannerCounter">1 / {{ galeries|length }}</div>
+        {% endif %}
+
+    </div>{# /carousel #}
+</div>{# /hero-carousel-wrap #}
+
+<script>
+(function(){
+    var carousel = document.getElementById('bannerCarousel');
+    var counter  = document.getElementById('bannerCounter');
+    if (!carousel || !counter) return;
+    var total = {{ galeries|length }};
+    carousel.addEventListener('slid.bs.carousel', function(e){
+        counter.textContent = (e.to + 1) + ' / ' + total;
+    });
+})();
+</script>
 
 {# ===== CHÍNH SÁCH CỬA HÀNG ===== #}
 <section class="usp-strip py-0" style="background:#fff;border-bottom:1px solid #e8f0fc;">
@@ -357,15 +668,17 @@ async function addToCartIndex(bookId) {
                 btn.disabled = false;
             }, 1500);
         } else if (data.redirect) {
-            alert(data.message);
-            window.location.href = data.redirect;
+            // Thay thế alert() bằng showSystemAlert()
+            showSystemAlert('error', 'Yêu cầu đăng nhập', data.message, () => {
+                window.location.href = data.redirect;
+            });
         } else {
-            alert('❌ Có lỗi xảy ra.');
+            showSystemAlert('error', 'Lỗi hệ thống', data.message || 'Có lỗi xảy ra khi thêm vào giỏ.');
             icon.className = originalClass;
             btn.disabled = false;
         }
     } catch (error) {
-        alert('Lỗi kết nối máy chủ!');
+        showSystemAlert('error', 'Lỗi đường truyền', 'Không thể kết nối với máy chủ!');
         icon.className = originalClass;
         btn.disabled = false;
     }

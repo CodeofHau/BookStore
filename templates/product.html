@@ -137,8 +137,8 @@
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <div class="qty-control d-flex align-items-center">
                             <button class="qty-btn" onclick="changeQty(-1)"><i class="fas fa-minus"></i></button>
-                            <input type="text" id="quantity" value="1" readonly
-                                   style="width:46px;text-align:center;border:none;font-weight:700;font-size:1rem;background:transparent;outline:none;">
+                            <input type="number" id="quantity" value="1" min="1" onblur="validateQty()"
+                                   style="width:46px;text-align:center;border:none;font-weight:700;font-size:1rem;background:transparent;outline:none;" class="hide-arrows">
                             <button class="qty-btn" onclick="changeQty(1)"><i class="fas fa-plus"></i></button>
                         </div>
 
@@ -324,7 +324,6 @@
                                                 </div>
                                             </div>
                                             <div class="review-text mt-2">{{ fb.note }}</div>
-                                            <div class="review-text mt-2">{{ fb.note }}</div>
                                             
                                             {% if fb.image %}
                                             <div class="mt-3">
@@ -385,218 +384,84 @@
 </div>
 
 <style>
-/* ===== PRODUCT PAGE STYLES ===== */
+/* Ẩn mũi tên mặc định của thẻ input type number */
+.hide-arrows::-webkit-outer-spin-button,
+.hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.hide-arrows { -moz-appearance: textfield; }
 
 /* Image card */
-.product-img-card {
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 16px rgba(0,102,179,0.1);
-}
-.product-main-img {
-    transition: transform 0.3s ease;
-}
-.product-img-card:hover .product-main-img {
-    transform: scale(1.03);
-}
-.discount-tag {
-    position: absolute; top: 12px; left: 12px;
-    background: #e8041c; color: #fff;
-    padding: 4px 10px; border-radius: 6px;
-    font-size: 0.8rem; font-weight: 700;
-}
-.status-badge {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.78rem;
-    font-weight: 600;
-}
+.product-img-card { border-radius: 10px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,102,179,0.1); }
+.product-main-img { transition: transform 0.3s ease; }
+.product-img-card:hover .product-main-img { transform: scale(1.03); }
+.discount-tag { position: absolute; top: 12px; left: 12px; background: #e8041c; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; }
+.status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
 
 /* Info card */
-.product-info-card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(0,102,179,0.08);
-}
-.cat-tag {
-    background: #e8f4ff;
-    color: #0066b3;
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-decoration: none;
-}
+.product-info-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,102,179,0.08); }
+.cat-tag { background: #e8f4ff; color: #0066b3; border-radius: 6px; padding: 4px 12px; font-size: 0.78rem; font-weight: 600; text-decoration: none; }
 .cat-tag:hover { background: #0066b3; color: #fff; }
 
 /* Prices */
-.current-price {
-    color: #e8041c;
-    font-size: 2rem;
-    font-weight: 800;
-    line-height: 1;
-}
-.original-price {
-    color: #9ca3af;
-    font-size: 1rem;
-    text-decoration: line-through;
-}
-.save-badge {
-    background: #fff0f0;
-    color: #e8041c;
-    border: 1px solid #ffc9c9;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
+.current-price { color: #e8041c; font-size: 2rem; font-weight: 800; line-height: 1; }
+.original-price { color: #9ca3af; font-size: 1rem; text-decoration: line-through; }
+.save-badge { background: #fff0f0; color: #e8041c; border: 1px solid #ffc9c9; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
 
 /* Quantity control */
-.qty-control {
-    background: #f0f7ff;
-    border-radius: 8px;
-    padding: 4px;
-    border: 1.5px solid #d1e8ff;
-}
-.qty-btn {
-    width: 30px; height: 30px;
-    border: none;
-    background: transparent;
-    color: #0066b3;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.75rem;
-    transition: background 0.2s;
-    display: flex; align-items: center; justify-content: center;
-}
+.qty-control { background: #f0f7ff; border-radius: 8px; padding: 4px; border: 1.5px solid #d1e8ff; }
+.qty-btn { width: 30px; height: 30px; border: none; background: transparent; color: #0066b3; border-radius: 6px; cursor: pointer; font-size: 0.75rem; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
 .qty-btn:hover { background: #d1e8ff; }
 
 /* CTA buttons */
-.btn-add-cart {
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: 2px solid #0066b3;
-    background: transparent;
-    color: #0066b3;
-    font-weight: 700;
-    font-size: 0.88rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
+.btn-add-cart { padding: 10px 20px; border-radius: 8px; border: 2px solid #0066b3; background: transparent; color: #0066b3; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .btn-add-cart:hover { background: #0066b3; color: #fff; }
-.btn-buy-now {
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    background: linear-gradient(135deg, #e8041c, #c0031a);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.88rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(232,4,28,0.3);
-}
+.btn-buy-now { padding: 10px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, #e8041c, #c0031a); color: #fff; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 4px 12px rgba(232,4,28,0.3); }
 .btn-buy-now:hover { background: linear-gradient(135deg, #c0031a, #a0021a); transform: translateY(-1px); }
 
 /* Policy card */
-.policy-card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(0,102,179,0.08);
-}
-.policy-item-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f0f7ff;
-    margin-bottom: 2px;
-}
+.policy-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,102,179,0.08); }
+.policy-item-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f7ff; margin-bottom: 2px; }
 .policy-item-row i { font-size: 1rem; margin-top: 2px; flex-shrink: 0; }
 
 /* Tabs */
-.product-tabs {
-    border-bottom: 2px solid #e8f0fc;
-    gap: 4px;
-}
-.product-tab-btn {
-    background: none;
-    border: none;
-    padding: 12px 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #6b7280;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    border-radius: 6px 6px 0 0;
-    transition: all 0.2s;
-    font-family: 'Be Vietnam Pro', sans-serif;
-}
+.product-tabs { border-bottom: 2px solid #e8f0fc; gap: 4px; }
+.product-tab-btn { background: none; border: none; padding: 12px 20px; font-size: 0.9rem; font-weight: 600; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; border-radius: 6px 6px 0 0; transition: all 0.2s; font-family: 'Be Vietnam Pro', sans-serif; }
 .product-tab-btn:hover { color: #0066b3; background: #f0f7ff; }
 .product-tab-btn.active { color: #0066b3; border-bottom-color: #0066b3; background: #f0f7ff; }
-.product-tab-content {
-    background: #fff;
-    border-radius: 0 0 10px 10px;
-    padding: 30px;
-    box-shadow: 0 2px 12px rgba(0,102,179,0.08);
-    border: 1px solid #e8f0fc;
-    border-top: none;
-}
+.product-tab-content { background: #fff; border-radius: 0 0 10px 10px; padding: 30px; box-shadow: 0 2px 12px rgba(0,102,179,0.08); border: 1px solid #e8f0fc; border-top: none; }
 
 /* Reviews */
-.rating-summary {
-    background: #f0f7ff;
-    border-radius: 10px;
-    border: 1px solid #d1e8ff;
-}
-.review-item {
-    padding: 16px 0;
-    border-bottom: 1px solid #f0f7ff;
-}
+.rating-summary { background: #f0f7ff; border-radius: 10px; border: 1px solid #d1e8ff; }
+.review-item { padding: 16px 0; border-bottom: 1px solid #f0f7ff; }
 .review-item:last-child { border-bottom: none; }
-.review-text {
-    background: #f8fbff;
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-size: 0.88rem;
-    color: #374151;
-    line-height: 1.6;
-    border: 1px solid #e8f0fc;
-}
-.verified-badge {
-    font-size: 0.72rem;
-    color: #0aab5c;
-    font-weight: 600;
-}
+.review-text { background: #f8fbff; border-radius: 8px; padding: 12px 14px; font-size: 0.88rem; color: #374151; line-height: 1.6; border: 1px solid #e8f0fc; }
+.verified-badge { font-size: 0.72rem; color: #0aab5c; font-weight: 600; }
 
 /* Book card (reused) */
-.book-card {
-    background: #fff;
-    border-radius: 10px !important;
-    box-shadow: 0 1px 6px rgba(0,102,179,0.08);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.book-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 24px rgba(0,102,179,0.14) !important;
-}
+.book-card { background: #fff; border-radius: 10px !important; box-shadow: 0 1px 6px rgba(0,102,179,0.08); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.book-card:hover { transform: translateY(-5px); box-shadow: 0 10px 24px rgba(0,102,179,0.14) !important; }
 </style>
 
 <script>
-function changeQty(amount) {
+// Hàm kiểm tra khi người dùng gõ tay
+function validateQty() {
     const input = document.getElementById('quantity');
-    let val = parseInt(input.value) + amount;
-    
-    // Ràng buộc số lượng không được vượt quá tồn kho (nếu bạn muốn chặt chẽ)
+    let val = parseInt(input.value);
     const maxStock = parseInt("{{ book.stock | default(1) }}");
-    if (val > maxStock) {
-        alert('Kho chỉ còn ' + maxStock + ' sản phẩm!');
+    
+    if (isNaN(val) || val < 1) {
+        val = 1;
+    } else if (val > maxStock) {
+        showSystemAlert('error', 'Số lượng có hạn', 'Kho chỉ còn ' + maxStock + ' sản phẩm!');
         val = maxStock;
     }
-    if (val >= 1) input.value = val;
+    input.value = val;
+}
+
+// Tái sử dụng validate cho nút bấm Tăng/Giảm
+function changeQty(amount) {
+    const input = document.getElementById('quantity');
+    input.value = parseInt(input.value) + amount;
+    validateQty();
 }
 
 async function addToCart(redirect) {
@@ -629,16 +494,16 @@ async function addToCart(redirect) {
                 }, 2000);
             }
         } else if (data.redirect) {
-            alert(data.message);
-            window.location.href = data.redirect;
+            showSystemAlert('error', 'Yêu cầu đăng nhập', data.message, () => {
+                window.location.href = data.redirect;
+            });
         } else {
-            alert('❌ Lỗi hệ thống!');
+            showSystemAlert('error', 'Lỗi hệ thống', data.message || 'Đã có lỗi xảy ra, vui lòng thử lại!');
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     } catch (error) {
-        console.error(error);
-        alert('Lỗi kết nối!');
+        showSystemAlert('error', 'Lỗi đường truyền', 'Không thể kết nối với máy chủ!');
         btn.innerHTML = originalText;
         btn.disabled = false;
     }

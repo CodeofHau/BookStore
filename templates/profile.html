@@ -162,106 +162,72 @@
                 reader.onload = function(event) { avatarPreview.src = event.target.result; }
                 reader.readAsDataURL(file);
             } else {
-                alert('Vui lòng chỉ kéo thả một file ảnh (JPG, PNG)!');
+                showSystemAlert('error', 'Sai định dạng', 'Vui lòng chỉ kéo thả một file ảnh (JPG, PNG)!');
             }
         }
     });
 
     /* ----- XỬ LÝ CHỌN ĐỊA CHỈ 3 CẤP ----- */
     let apiData = [];
-
     function toggleAddressEdit() {
         const addrSection = document.getElementById('edit-addr-section');
         addrSection.classList.toggle('d-none');
-        if (!addrSection.classList.contains('d-none') && apiData.length === 0) {
-            loadVietnamProvinces();
-        }
+        if (!addrSection.classList.contains('d-none') && apiData.length === 0) { loadVietnamProvinces(); }
     }
-
     async function loadVietnamProvinces() {
         try {
             const res = await fetch('https://provinces.open-api.vn/api/?depth=3');
             apiData = await res.json();
             const pSelect = document.getElementById('province');
-            apiData.forEach(p => {
-                pSelect.innerHTML += `<option value="${p.code}">${p.name}</option>`;
-            });
-        } catch (error) {
-            console.error("Lỗi tải API Tỉnh thành:", error);
-        }
+            apiData.forEach(p => { pSelect.innerHTML += `<option value="${p.code}">${p.name}</option>`; });
+        } catch (error) { console.error("Lỗi tải API:", error); }
     }
 
     document.getElementById('province').addEventListener('change', function() {
-        const pCode = this.value;
-        const dSelect = document.getElementById('district');
-        const wSelect = document.getElementById('ward');
-        
-        dSelect.innerHTML = '<option value="">-- Quận / Huyện --</option>';
-        wSelect.innerHTML = '<option value="">-- Phường / Xã --</option>';
-        wSelect.disabled = true;
-
+        const pCode = this.value; const dSelect = document.getElementById('district'); const wSelect = document.getElementById('ward');
+        dSelect.innerHTML = '<option value="">-- Quận / Huyện --</option>'; wSelect.innerHTML = '<option value="">-- Phường / Xã --</option>'; wSelect.disabled = true;
         if(!pCode) { dSelect.disabled = true; return; }
-        
         dSelect.disabled = false;
         const province = apiData.find(p => p.code == pCode);
         province.districts.forEach(d => { dSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`; });
     });
 
     document.getElementById('district').addEventListener('change', function() {
-        const pCode = document.getElementById('province').value;
-        const dCode = this.value;
-        const wSelect = document.getElementById('ward');
-        
+        const pCode = document.getElementById('province').value; const dCode = this.value; const wSelect = document.getElementById('ward');
         wSelect.innerHTML = '<option value="">-- Phường / Xã --</option>';
-
         if(!dCode) { wSelect.disabled = true; return; }
-        
         wSelect.disabled = false;
-        const province = apiData.find(p => p.code == pCode);
-        const district = province.districts.find(d => d.code == dCode);
+        const province = apiData.find(p => p.code == pCode); const district = province.districts.find(d => d.code == dCode);
         district.wards.forEach(w => { wSelect.innerHTML += `<option value="${w.code}">${w.name}</option>`; });
     });
 
     /* ----- VALIDATE TRƯỚC KHI SUBMIT ----- */
     document.getElementById('profile-form').addEventListener('submit', function(e) {
-        // 1. Validate Email (Phải có dạng xx@yy.zz)
         const emailVal = document.getElementById('email_input').value.trim();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(emailVal)) {
             e.preventDefault();
-            alert("Vui lòng nhập đúng định dạng email (ví dụ: ten@gmail.com)!");
-            document.getElementById('email_input').focus();
+            showSystemAlert('error', 'Email không hợp lệ', 'Vui lòng nhập đúng định dạng email (ví dụ: ten@gmail.com)!', () => { document.getElementById('email_input').focus(); });
             return;
         }
 
-        // 2. Validate Số điện thoại (10 số chuẩn VN: 03, 05, 07, 08, 09)
         const phoneVal = document.getElementById('phone_input').value.trim();
         const phoneRegex = /^0[35789][0-9]{8}$/;
         if (!phoneRegex.test(phoneVal)) {
             e.preventDefault();
-            alert("Vui lòng nhập số điện thoại hợp lệ! (10 số, bắt đầu bằng 03, 05, 07, 08, hoặc 09)");
-            document.getElementById('phone_input').focus();
+            showSystemAlert('error', 'Sai số điện thoại', 'Vui lòng nhập 10 số, bắt đầu bằng 03, 05, 07, 08, hoặc 09!', () => { document.getElementById('phone_input').focus(); });
             return;
         }
 
-        // 3. Validate Địa chỉ
         const editSection = document.getElementById('edit-addr-section');
         if (!editSection.classList.contains('d-none')) {
-            const pSel = document.getElementById('province');
-            const dSel = document.getElementById('district');
-            const wSel = document.getElementById('ward');
-            const street = document.getElementById('street').value.trim();
-
+            const pSel = document.getElementById('province'); const dSel = document.getElementById('district'); const wSel = document.getElementById('ward'); const street = document.getElementById('street').value.trim();
             if (!pSel.value || !dSel.value || !wSel.value || !street) {
                 e.preventDefault();
-                alert("Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã và Số nhà!");
+                showSystemAlert('error', 'Thiếu địa chỉ', 'Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã và Số nhà!');
                 return;
             }
-
-            const pName = pSel.options[pSel.selectedIndex].text;
-            const dName = dSel.options[dSel.selectedIndex].text;
-            const wName = wSel.options[wSel.selectedIndex].text;
-
+            const pName = pSel.options[pSel.selectedIndex].text; const dName = dSel.options[dSel.selectedIndex].text; const wName = wSel.options[wSel.selectedIndex].text;
             document.getElementById('final_address').value = `${street}, ${wName}, ${dName}, ${pName}`;
         }
     });

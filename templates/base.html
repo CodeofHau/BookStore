@@ -23,14 +23,41 @@
         * { box-sizing: border-box; }
         body { font-family: 'Be Vietnam Pro', sans-serif; background: #f5f8fc; color: var(--text-dark); }
 
-        /* ===== TOP BAR ===== */
-        .topbar { background: var(--primary-dark); color: rgba(255,255,255,0.85); font-size: 0.8rem; padding: 6px 0; }
-        .topbar a { color: rgba(255,255,255,0.85); text-decoration: none; }
-        .topbar a:hover { color: #fff; }
+        /* ===== SCROLLING TOPBAR (THAY THẾ TOPBAR CŨ) ===== */
+        .topbar-scroller {
+            background: linear-gradient(90deg, #0d1b3e, #1a1a2e, #0d1b3e);
+            color: #fff;
+            padding: 12px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            border-bottom: 3px solid var(--secondary);
+            z-index: 1040;
+        }
+        .topbar-scroller-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scroll-topbar 30s linear infinite;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .topbar-scroller-content:hover {
+            animation-play-state: paused;
+            cursor: default;
+        }
+        @keyframes scroll-topbar {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        .text-highlight { color: #ffd700; font-weight: 800; font-size: 1.15rem; text-shadow: 0 0 8px rgba(255,215,0,0.4); }
+        .text-cyan { color: #00ffcc; font-weight: 800; }
+        .text-coupon { background: var(--secondary); color: #fff; padding: 3px 12px; border-radius: 6px; border: 1.5px dashed #ffd700; margin: 0 6px; font-weight: 800; }
 
         /* ===== NAVBAR MAIN ===== */
-        .navbar-main { background: var(--primary); padding: 12px 0; box-shadow: 0 2px 10px rgba(0,102,179,0.3); }
-        .navbar-brand-text { font-size: 1.6rem; font-weight: 800; color: #fff !important; letter-spacing: -0.5px; }
+        .navbar-main { background: linear-gradient(135deg, #0077cc 0%, #0066b3 60%, #004f8c 100%) !important; padding: 12px 0; box-shadow: 0 2px 10px rgba(0,102,179,0.3); }
+        .navbar-brand-text { font-size: 1.6rem; font-weight: 800; color: #fff !important; letter-spacing: -0.5px; transition: transform 0.2s ease; }
+        .navbar-brand-text:hover { transform: scale(1.03); }
         .navbar-brand-text span { color: #ffd700; }
 
         .search-wrapper { position: relative; flex: 1; max-width: 480px; }
@@ -45,11 +72,14 @@
         .user-btn { background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3); color: #fff; border-radius: 8px; padding: 8px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .user-btn:hover { background: rgba(255,255,255,0.25); color: #fff; }
 
-        /* ===== CATEGORY NAV ===== */
+        /* ===== CATEGORY NAV & ARROW ANIMATION ===== */
         .cat-nav { background: var(--primary-dark); border-top: 1px solid rgba(255,255,255,0.1); }
         .cat-nav .nav-link { color: rgba(255,255,255,0.9) !important; font-size: 0.85rem; font-weight: 500; padding: 9px 14px; transition: all 0.2s; white-space: nowrap; }
-        .cat-nav .nav-link:hover, .cat-nav .nav-link.active { background: rgba(255,255,255,0.15); color: #fff !important; border-radius: 4px; }
+        .cat-nav .nav-link:hover, .cat-nav .nav-link.active, .cat-nav .dropdown-toggle[aria-expanded="true"] { background: rgba(255,255,255,0.15); color: #fff !important; border-radius: 4px; }
         .cat-nav .nav-link i { margin-right: 5px; }
+        .cat-nav .dropdown-toggle::after { display: none; } 
+        .cat-nav .dropdown-toggle .toggle-icon { transition: transform 0.3s ease; margin-left: 6px; }
+        .cat-nav .dropdown-toggle[aria-expanded="true"] .toggle-icon { transform: rotate(180deg); }
 
         /* ===== MEGA MENU CSS ===== */
         .mega-menu { width: 850px; max-width: 96vw; padding: 20px; border: none; border-radius: 0 0 12px 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); margin-top: 0 !important; }
@@ -76,20 +106,21 @@
         .alert-danger { background: #fff0f0; color: #991b1b; }
         .alert-warning { background: #fffbeb; color: #92400e; }
 
-        /* ===== FOOTER GỐC CỦA BẠN ===== */
-        footer { background: #0d1b3e; color: rgba(255,255,255,0.75); }
+        /* ===== FOOTER ===== */
+        footer { background: linear-gradient(160deg, #0d1b3e 0%, #0f2251 100%) !important; color: rgba(255,255,255,0.75); }
         footer h5 { color: #fff; font-weight: 700; margin-bottom: 16px; }
         footer a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
         footer a:hover { color: #fff; }
         footer .footer-brand { color: #fff; font-size: 1.4rem; font-weight: 800; }
         footer .footer-brand span { color: #ffd700; }
         .footer-divider { border-color: rgba(255,255,255,0.1); }
-        .social-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: all 0.2s; text-decoration: none; }
-        .social-btn:hover { background: var(--primary); color: #fff; }
+        .social-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); text-decoration: none; }
+        .social-btn:hover { transform: translateY(-3px) scale(1.1); background: var(--primary) !important; color: #fff; }
 
         /* ===== CHAT BOT ===== */
-        #chat-btn { position: fixed; bottom: 24px; right: 24px; z-index: 1050; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(0,102,179,0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        #chat-btn { position: fixed; bottom: 24px; right: 24px; z-index: 1050; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(0,102,179,0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; animation: chat-pulse 3s ease-in-out infinite; }
         #chat-btn:hover { background: var(--primary-dark); transform: scale(1.08); }
+        @keyframes chat-pulse { 0%, 100% { box-shadow: 0 4px 20px rgba(0,102,179,0.4); } 50% { box-shadow: 0 4px 30px rgba(0,102,179,0.7), 0 0 0 8px rgba(0,102,179,0.1); } }
         #chat-window { position: fixed; bottom: 90px; right: 24px; z-index: 1050; width: 340px; height: 460px; border-radius: 16px; overflow: hidden; display: none; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
         .chat-header { background: var(--primary); }
         #chat-body { flex: 1; overflow-y: auto; background: #f8fafc; }
@@ -101,25 +132,35 @@
         .notif-btn { background: none; border: none; color: #fff; position: relative; padding: 6px 10px; }
         .notif-badge { position: absolute; top: 0; right: 0; background: var(--secondary); color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
-        /* ===== SYSTEM ALERT MODAL (NEW) ===== */
+        /* ===== SYSTEM ALERT MODAL ===== */
         .alert-icon-wrapper { width: 80px; height: 80px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
         .alert-icon-wrapper.success { background: #e8fff0; color: #16a34a; }
         .alert-icon-wrapper.error { background: #fff0f0; color: #c0031a; }
         .alert-icon-wrapper.info { background: #e8f4ff; color: var(--primary); }
 
-        @media (max-width: 768px) { .topbar { display: none; } .search-wrapper { max-width: 100%; } #chat-window { width: calc(100vw - 20px); right: 10px; } }
+        /* ===== SCROLL TO TOP BTN ===== */
+        #scroll-top-btn { position: fixed; bottom: 90px; right: 24px; z-index: 1040; width: 40px; height: 40px; border-radius: 50%; border: none; background: #fff; color: var(--primary); box-shadow: 0 2px 12px rgba(0,102,179,0.2); cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.3s; font-size: 1rem; }
+        #scroll-top-btn:hover { background: var(--primary); color: #fff; transform: translateY(-2px); }
+        #scroll-top-btn.visible { display: flex; }
+
+        @media (max-width: 768px) { .topbar-scroller { display: none; } .search-wrapper { max-width: 100%; } #chat-window { width: calc(100vw - 20px); right: 10px; } }
     </style>
 </head>
 <body>
 
-    <div class="topbar d-none d-md-block">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex gap-4">
-                    <span><i class="fas fa-phone-alt me-1"></i> Hotline: <a href="tel:0818180763">0818 180 763</a></span>
-                    <span><i class="fas fa-envelope me-1"></i> <a href="mailto:hl0818180763@gmail.com">hl0818180763@gmail.com</a></span>
-                </div>
-            </div>
+    <div class="topbar-scroller d-none d-md-block">
+        <div class="topbar-scroller-content">
+            🎉 <span class="text-highlight">BOOKSTORE</span> TƯNG BỪNG KHAI TRƯƠNG — 
+            <span class="text-cyan">MIỄN PHÍ GIAO HÀNG</span> TOÀN QUỐC CHO MỌI ĐƠN HÀNG! 
+            <span class="mx-4 text-muted">|</span> 
+            🎁 NHẬP MÃ <span class="text-coupon">OPENING</span> ĐỂ GIẢM NGAY 20% CHO 100 KHÁCH HÀNG ĐẦU TIÊN! 
+            <span class="mx-4 text-muted">|</span>
+            🤖 TRẢI NGHIỆM TÌM SÁCH CÙNG TRỢ LÝ ẢO THÔNG MINH!
+            <span class="mx-4 text-muted">|</span>
+            🎉 <span class="text-highlight">BOOKSTORE AI</span> TƯNG BỪNG KHAI TRƯƠNG — 
+            <span class="text-cyan">MIỄN PHÍ GIAO HÀNG</span> TOÀN QUỐC CHO MỌI ĐƠN HÀNG!
+            <span class="mx-4 text-muted">|</span> 
+            🎁 NHẬP MÃ <span class="text-coupon">OPENING</span> ĐỂ GIẢM NGAY 20% CHO 100 KHÁCH HÀNG ĐẦU TIÊN! 
         </div>
     </div>
 
@@ -131,7 +172,7 @@
                 </a>
 
                 <form action="/search" method="GET" class="search-wrapper d-flex flex-grow-1">
-                    <input type="text" name="keyword" placeholder="Tìm tên sách, tác giả, thể loại..." value="{{ request.args.get('keyword', '') }}">
+                    <input type="text" name="keyword" placeholder="Tìm kiếm sách, tác giả..." value="{{ request.args.get('keyword', '') }}">
                     <button type="submit"><i class="fas fa-search"></i></button>
                 </form>
 
@@ -144,19 +185,57 @@
                             <span id="notif-badge" class="notif-badge">{{ unread_count }}</span>
                             {% endif %}
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end" style="width: 310px; max-height: 380px; overflow-y: auto;">
-                            <li><div class="px-3 py-2 fw-bold text-primary border-bottom"><i class="fas fa-bell me-2"></i>Thông báo</div></li>
+                        
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="width: 340px; max-height: 420px; overflow-y: auto; padding: 0;">
+                            <li class="sticky-top bg-white" style="z-index: 10;">
+                                <div class="px-3 py-2 fw-bold text-primary border-bottom d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-bell me-2"></i>Thông báo của bạn</span>
+                                    {% if unread_count and unread_count > 0 %}
+                                    <span class="badge bg-danger rounded-pill" style="font-size: 0.7rem;">{{ unread_count }} mới</span>
+                                    {% endif %}
+                                </div>
+                            </li>
+
                             {% if notifications|length == 0 %}
-                                <li><div class="text-center text-muted py-4 small">Chưa có thông báo nào</div></li>
+                                <li>
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-box-open fs-2 mb-2" style="opacity: 0.3;"></i>
+                                        <p class="small mb-0">Chưa có thông báo nào</p>
+                                    </div>
+                                </li>
                             {% else %}
                                 {% for notif in notifications %}
-                                <li>
-                                    <a class="dropdown-item py-2 border-bottom {% if not notif.read %}bg-light{% endif %}" href="/order-history">
-                                        <small class="d-block text-wrap" style="white-space: normal; line-height: 1.4;">{{ notif.content }}</small>
+                                <li style="position: relative;">
+                                    <a class="dropdown-item py-2 border-bottom d-flex align-items-start gap-3 {% if notif.read == 0 %}bg-primary-light{% else %}bg-white{% endif %}" 
+                                       href="/order-history" 
+                                       style="white-space: normal; padding-left: 16px; padding-right: 24px; transition: background 0.2s;">
+                                        
+                                        <div class="mt-1 flex-shrink-0" style="color: {% if notif.read == 0 %}var(--primary){% else %}var(--text-muted){% endif %}; font-size: 1.1rem;">
+                                            <i class="fas fa-file-invoice-dollar"></i>
+                                        </div>
+                                        
+                                        <div class="flex-grow-1">
+                                            <div class="text-wrap {% if notif.read == 0 %}fw-bold text-dark{% else %}text-muted{% endif %}" style="font-size: 0.85rem; line-height: 1.4;">
+                                                {{ notif.content }}
+                                            </div>
+                                            <div class="text-muted mt-1" style="font-size: 0.72rem;">
+                                                <i class="fas fa-hand-point-right me-1"></i> Nhấn để xem chi tiết
+                                            </div>
+                                        </div>
+
+                                        {% if notif.read == 0 %}
+                                        <span class="position-absolute" style="width: 8px; height: 8px; background: var(--secondary); border-radius: 50%; top: 16px; right: 12px; box-shadow: 0 0 0 2px rgba(232,4,28,0.2);"></span>
+                                        {% endif %}
                                     </a>
                                 </li>
                                 {% endfor %}
                             {% endif %}
+
+                            <li class="sticky-bottom bg-white border-top">
+                                <a href="/order-history" class="d-block text-center py-2 text-decoration-none fw-bold" style="color: var(--primary); font-size: 0.82rem; background: #f8fafc;">
+                                    Xem tất cả lịch sử
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     {% endif %}
@@ -198,10 +277,12 @@
         <div class="container">
             <div class="d-flex align-items-center">
                 <div class="dropdown position-static">
-                    <a class="nav-link dropdown-toggle fw-bold d-flex align-items-center gap-2"
+                    
+                    <a class="nav-link dropdown-toggle fw-bold d-flex align-items-center"
                        href="#" data-bs-toggle="dropdown"
-                       style="background: rgba(255,255,255,0.15); border-radius: 4px; padding: 9px 14px;">
+                       style="border-radius: 4px; padding: 9px 14px;">
                         <i class="fas fa-th-large"></i> Danh mục sách
+                        <i class="fas fa-chevron-down toggle-icon" style="font-size: 0.75rem;"></i>
                     </a>
                     
                     <div class="dropdown-menu shadow-lg mega-menu">
@@ -344,6 +425,10 @@
         </div>
     </div>
 
+    <button id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Lên đầu trang">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         /* ===== HỆ THỐNG GỌI MODAL DÙNG CHUNG ===== */
@@ -352,7 +437,6 @@
             alertModal = new bootstrap.Modal(document.getElementById('systemAlertModal'));
         });
 
-        // Hàm thông báo 1 nút Đóng
         function showSystemAlert(type, title, message, callback = null) {
             const alertBody = document.getElementById('systemAlertBody');
             let iconClass = type === 'success' ? 'success' : 'error';
@@ -375,7 +459,6 @@
             }
         }
 
-        // Hàm thông báo 2 nút (Hỏi xác nhận)
         function showSystemConfirm(title, message, confirmCallback) {
             const alertBody = document.getElementById('systemAlertBody');
             alertBody.innerHTML = `
@@ -446,6 +529,13 @@
                 badge.style.display = 'none';
             }
         }
+
+        // Scroll to top button
+        window.addEventListener('scroll', function() {
+            const btn = document.getElementById('scroll-top-btn');
+            if (window.scrollY > 400) btn.classList.add('visible');
+            else btn.classList.remove('visible');
+        });
     </script>
 </body>
 </html>

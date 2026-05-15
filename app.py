@@ -12,11 +12,19 @@ from datetime import datetime, timedelta
 import random
 import uuid
 import math
+import hmac
+import hashlib
+import time
+import re
 
 # --- CẤU HÌNH ---
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = 'hmart_bookstore_ai_secret_key_2026'
+
+PAYOS_CLIENT_ID = "69b24e7a-6616-4b70-be54-8edaaf108e64"
+PAYOS_API_KEY = "6d8fb519-aecd-4df7-a095-e48e2a7a289a"
+PAYOS_CHECKSUM_KEY = "ab268767e49f84e1a3cc0f0c1d704105f86986533c62fac9deea215e2c8356a6"
 
 # --- ĐĂNG KÝ MODULE CHATBOT MỚI ---
 from chatbot import chat_bp
@@ -61,7 +69,14 @@ def inject_global_data():
         data['category_tree'] = cursor.fetchall()
         
         if 'user_id' in session:
-            cursor.execute("SELECT id, content, `read` FROM notifications WHERE user_id = %s ORDER BY id DESC LIMIT 10", (session['user_id'],))
+            # Sửa lại lệnh SELECT: Sắp xếp theo trạng thái chưa đọc (0) lên trước đã đọc (1)
+            cursor.execute("""
+                SELECT id, content, `read` 
+                FROM notifications 
+                WHERE user_id = %s 
+                ORDER BY `read` ASC 
+                LIMIT 10
+            """, (session['user_id'],))
             data['notifications'] = cursor.fetchall()
             
             cursor.execute("SELECT COUNT(*) as count FROM notifications WHERE user_id = %s AND `read` = 0", (session['user_id'],))
@@ -97,22 +112,41 @@ def register():
         confirm_password = request.form.get('confirm_password', '').strip()
         user_name = request.form.get('username', '').strip()
         
-        if confirm_password and password != confirm_password:
-            flash('Mật khẩu xác nhận không khớp!', 'danger')
-            return render_template('register.html')
-            
+        # 1. Kiểm tra rỗng
         if not user_name or not email or not password:
             flash('Vui lòng nhập đầy đủ thông tin!', 'danger')
             return render_template('register.html')
+
+        # 2. Validate Tên đăng nhập (4-20 ký tự, không dấu cách, không ký tự đặc biệt)
+        if not re.match(r'^[a-zA-Z0-9_]{4,20}$', user_name):
+            flash('Tên đăng nhập phải từ 4-20 ký tự, không chứa dấu cách và ký tự đặc biệt!', 'danger')
+            return render_template('register.html')
+
+        # 3. Validate Email
+        if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            flash('Định dạng email không hợp lệ!', 'danger')
+            return render_template('register.html')
+
+        # 4. Validate Mật khẩu (Ít nhất 6 ký tự)
+        if len(password) < 6:
+            flash('Mật khẩu phải có ít nhất 6 ký tự!', 'danger')
+            return render_template('register.html')
+
+        # 5. Validate Xác nhận mật khẩu
+        if password != confirm_password:
+            flash('Mật khẩu xác nhận không trùng khớp!', 'danger')
+            return render_template('register.html')
         
+        # 6. Kiểm tra trùng lặp trong Database
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT id FROM users WHERE email = %s OR user_name = %s", (email, user_name))
         if cursor.fetchone():
-            flash('Email hoặc Tên đăng nhập này đã được sử dụng!', 'danger')
+            flash('Email hoặc Tên đăng nhập này đã tồn tại trong hệ thống!', 'danger')
             conn.close()
             return render_template('register.html')
         
+        # Lưu vào Database nếu qua hết vòng kiểm duyệt
         hashed_pw = generate_password_hash(password)
         new_id = str(uuid.uuid4())
         
@@ -124,6 +158,7 @@ def register():
         conn.close()
         flash('Đăng ký thành công! Vui lòng đăng nhập.', 'success')
         return redirect(url_for('login'))
+        
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -282,7 +317,7 @@ def change_password():
 @app.route('/')
 def index():
     page = request.args.get('page', 1, type=int)
-    per_page = 8
+    per_page = 10
     offset = (page - 1) * per_page
     price_filter = request.args.get('price', '')
     price_cond = get_price_condition(price_filter)
@@ -537,28 +572,60 @@ def get_cart_details():
 
 @app.route('/api/update-cart', methods=['POST'])
 def update_cart():
-    if 'user_id' not in session: return jsonify({'success': False})
+    if 'user_id' not in session: 
+        return jsonify({'success': False, 'message': 'Vui lòng đăng nhập'})
+        
     data = request.json
-    product_id, action = str(data.get('book_id')), data.get('action')
+    book_id = data.get('book_id')
+    action = data.get('action')
+    quantity_to_set = data.get('quantity')
     user_id = session['user_id']
-
+    
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, quantity FROM carts WHERE user_id = %s AND product_id = %s", (user_id, product_id))
+    
+    # 1. Lấy thông tin số lượng trong giỏ và tồn kho thực tế
+    cursor.execute("""
+        SELECT c.quantity as cart_qty, p.stock, p.title 
+        FROM carts c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = %s AND c.product_id = %s
+    """, (user_id, book_id))
     item = cursor.fetchone()
-
-    if item:
-        if action == 'increase':
-            cursor.execute("UPDATE carts SET quantity = quantity + 1 WHERE id = %s", (item['id'],))
-        elif action == 'decrease':
-            if item['quantity'] > 1:
-                cursor.execute("UPDATE carts SET quantity = quantity - 1 WHERE id = %s", (item['id'],))
-            else:
-                cursor.execute("DELETE FROM carts WHERE id = %s", (item['id'],))
-        elif action == 'remove':
-            cursor.execute("DELETE FROM carts WHERE id = %s", (item['id'],))
-        conn.commit()
+    
+    if not item:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Sản phẩm không có trong giỏ'})
+        
+    current_qty = item['cart_qty']
+    max_stock = item['stock']
+    
+    # 2. Xử lý logic Cộng / Trừ / Nhập tay (set) / Xóa
+    if action == 'increase':
+        new_qty = current_qty + 1
+    elif action == 'decrease':
+        new_qty = current_qty - 1
+    elif action == 'set':
+        new_qty = int(quantity_to_set) if quantity_to_set else current_qty
+    elif action == 'remove':
+        new_qty = 0
+    else:
+        new_qty = current_qty
+        
+    # 3. CHỐT CHẶN: Không cho nhập/bấm vượt quá kho
+    if new_qty > max_stock:
+        conn.close()
+        return jsonify({'success': False, 'message': f'Sách "{item["title"]}" chỉ còn {max_stock} cuốn!'})
+        
+    # 4. Cập nhật vào Database
+    if new_qty > 0:
+        cursor.execute("UPDATE carts SET quantity = %s WHERE user_id = %s AND product_id = %s", (new_qty, user_id, book_id))
+    else:
+        cursor.execute("DELETE FROM carts WHERE user_id = %s AND product_id = %s", (user_id, book_id))
+        
+    conn.commit()
     conn.close()
+    
     return jsonify({'success': True})
 
 @app.route('/checkout')
@@ -597,39 +664,97 @@ def apply_coupon():
 
 @app.route('/api/save-order', methods=['POST'])
 def save_order():
-    if 'user_id' not in session: return jsonify({"success": False})
+    if 'user_id' not in session: return jsonify({"success": False, "message": "Vui lòng đăng nhập"})
     data = request.json
-    conn = get_db(); cursor = conn.cursor()
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Kiểm tra tồn kho
+    for item in data['items']:
+        cursor.execute("SELECT stock, title FROM products WHERE id = %s", (item['id'],))
+        prod = cursor.fetchone()
+        if not prod or prod['stock'] < int(item['quantity']):
+            conn.close()
+            return jsonify({"success": False, "message": f"Sách '{prod['title']}' chỉ còn {prod['stock']} cuốn!"})
+            
+    cursor = conn.cursor() 
     order_id = str(uuid.uuid4())
+    # Tạo mã order_code dạng số (bắt buộc cho PayOS)
+    order_code = int(time.time() * 1000) % 9007199254740991
     
     payment_method = data.get('payment_method', 'cod')
     coupon_code = data.get('coupon_code')
     
+    # 2. Lưu đơn hàng
     cursor.execute("""
-        INSERT INTO orders (id, user_id, full_name, phone_number, address, total_money, status, coupon_code, payment_method) 
-        VALUES (%s, %s, %s, %s, %s, %s, 'Chờ xác nhận', %s, %s)
-    """, (order_id, session['user_id'], data['name'], data['phone'], data['address'], data['total'], coupon_code, payment_method))
+        INSERT INTO orders (id, user_id, full_name, phone_number, address, total_money, status, coupon_code, payment_method, order_code) 
+        VALUES (%s, %s, %s, %s, %s, %s, 'Chờ xác nhận', %s, %s, %s)
+    """, (order_id, session['user_id'], data['name'], data['phone'], data['address'], data['total'], coupon_code, payment_method, order_code))
     
     for item in data['items']:
         cursor.execute("""
             INSERT INTO order_detail (id, order_id, product_id, price, quantity, total_money) 
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (str(uuid.uuid4()), order_id, item['id'], item['price'], item['quantity'], float(item['price']) * int(item['quantity'])))
+        cursor.execute("UPDATE products SET stock = stock - %s WHERE id = %s", (int(item['quantity']), item['id']))
         
-        # TRỪ TỒN KHO SẢN PHẨM
-        cursor.execute("""
-            UPDATE products SET stock = stock - %s WHERE id = %s
-        """, (int(item['quantity']), item['id']))
-        
-    # TRỪ SỐ LƯỢNG MÃ GIẢM GIÁ (NẾU CÓ DÙNG)
     if coupon_code:
         cursor.execute("UPDATE coupons SET quantity = quantity - 1 WHERE code = %s AND quantity > 0", (coupon_code,))
-        cursor.execute("UPDATE coupons SET expired = 1 WHERE code = %s AND quantity <= 0", (coupon_code,)) # Tự vô hiệu hóa nếu hết mã
+        cursor.execute("UPDATE coupons SET expired = 1 WHERE code = %s AND quantity <= 0", (coupon_code,))
         
     cursor.execute("DELETE FROM carts WHERE user_id = %s", (session['user_id'],))
-    conn.commit(); conn.close()
+    conn.commit()
+    conn.close()
     
+    # 3. NẾU LÀ CHUYỂN KHOẢN -> TẠO LINK PAYOS
+    if payment_method == 'banking':
+        body = {
+            "orderCode": order_code,
+            "amount": int(data['total']),
+            "description": f"Thanh toan {order_code}",
+            "cancelUrl": request.host_url + "cart",
+            "returnUrl": request.host_url + "order-history"
+        }
+        # Tạo chữ ký bảo mật HMAC SHA256 cho PayOS
+        sign_data = f"amount={body['amount']}&cancelUrl={body['cancelUrl']}&description={body['description']}&orderCode={body['orderCode']}&returnUrl={body['returnUrl']}"
+        signature = hmac.new(PAYOS_CHECKSUM_KEY.encode(), sign_data.encode(), hashlib.sha256).hexdigest()
+        body['signature'] = signature
+        
+        headers = {"x-client-id": PAYOS_CLIENT_ID, "x-api-key": PAYOS_API_KEY, "Content-Type": "application/json"}
+        
+        try:
+            res = requests.post("https://api-merchant.payos.vn/v2/payment-requests", json=body, headers=headers)
+            res_data = res.json()
+            if res_data['code'] == '00':
+                return jsonify({"success": True, "checkout_url": res_data['data']['checkoutUrl']})
+            else:
+                return jsonify({"success": False, "message": "Lỗi từ PayOS: " + res_data.get('desc', '')})
+        except Exception as e:
+            return jsonify({"success": False, "message": "Lỗi kết nối đến cổng thanh toán!"})
+
+    # Nếu là COD thì trả về ID bình thường
     return jsonify({"success": True, "order_id": order_id})
+
+# --- API NHẬN THÔNG BÁO TỪ NGÂN HÀNG (WEBHOOK) ---
+@app.route('/payos-webhook', methods=['POST'])
+def payos_webhook():
+    webhook_data = request.json
+    try:
+        # Nếu giao dịch thành công (code = 00)
+        if webhook_data['success'] and webhook_data['data']['code'] == '00':
+            order_code = webhook_data['data']['orderCode']
+            
+            # Tự động cập nhật Database thành Đã xác nhận
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE orders SET status = 'Đã xác nhận' WHERE order_code = %s", (order_code,))
+            conn.commit()
+            conn.close()
+            
+        return jsonify({"success": True})
+    except Exception as e:
+        print("Webhook Error:", e)
+        return jsonify({"success": False})
 
 @app.route('/order-history')
 def order_history():
@@ -901,7 +1026,8 @@ def edit_user(id):
     phone = request.form.get('phone_number')
     address = request.form.get('address')
     role_id = request.form.get('role_id')
-    dob = request.form.get('date_of_birth')
+    
+    dob = request.form.get('date_of_birth') or None
     
     conn = get_db(); cursor = conn.cursor()
     cursor.execute("UPDATE users SET full_name=%s, user_name=%s, phone_number=%s, address=%s, role_id=%s, date_of_birth=%s WHERE id=%s", 

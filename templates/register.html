@@ -32,12 +32,12 @@
                         {% endif %}
                     {% endwith %}
 
-                    <form method="POST">
+                    <form method="POST" id="register-form">
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-dark small">Tên đăng nhập <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="Nhập tên tài khoản" required>
+                                <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="Chỉ viết liền không dấu, 4-20 ký tự" required>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -51,7 +51,7 @@
                             <label class="form-label fw-semibold text-dark small">Mật khẩu <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="Tạo mật khẩu" required>
+                                <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="Tối thiểu 6 ký tự" required>
                             </div>
                         </div>
                         <div class="mb-4">
@@ -76,4 +76,43 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Validation ngay tại trình duyệt trước khi gửi lên Server
+    document.getElementById('register-form').addEventListener('submit', function(e) {
+        const username = document.querySelector('input[name="username"]').value.trim();
+        const email = document.querySelector('input[name="email"]').value.trim();
+        const password = document.querySelector('input[name="password"]').value.trim();
+        const confirm = document.querySelector('input[name="confirm_password"]').value.trim();
+
+        // Regex: Chỉ cho phép chữ cái (hoa/thường), số và dấu gạch dưới, dài 4-20 ký tự
+        const userRegex = /^[a-zA-Z0-9_]{4,20}$/;
+        // Regex: Email chuẩn
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!userRegex.test(username)) {
+            e.preventDefault();
+            showSystemAlert('error', 'Lỗi tên đăng nhập', 'Tên đăng nhập phải từ 4 đến 20 ký tự, viết liền không chứa dấu cách hay ký tự đặc biệt!');
+            return;
+        }
+
+        if (!emailRegex.test(email)) {
+            e.preventDefault();
+            showSystemAlert('error', 'Lỗi email', 'Vui lòng nhập đúng định dạng email (ví dụ: khachhang@gmail.com)!');
+            return;
+        }
+
+        if (password.length < 6) {
+            e.preventDefault();
+            showSystemAlert('error', 'Mật khẩu quá ngắn', 'Mật khẩu của bạn phải có ít nhất 6 ký tự để đảm bảo an toàn!');
+            return;
+        }
+
+        if (password !== confirm) {
+            e.preventDefault();
+            showSystemAlert('error', 'Lỗi mật khẩu', 'Mật khẩu xác nhận không trùng khớp. Vui lòng gõ lại!');
+            return;
+        }
+    });
+</script>
 {% endblock %}
