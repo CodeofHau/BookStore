@@ -1,162 +1,133 @@
+import os
+import re 
+import google.generativeai as genai
 from flask import Blueprint, request, jsonify, session
-import mysql.connector
 import chromadb
 from chromadb.utils import embedding_functions
-import requests
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+chat_bp = Blueprint('chat', __name__)
 
-# Tạo Blueprint cho Chatbot
-chat_bp = Blueprint('chat_bp', __name__)
+# Cấu hình API Key
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# 1. Khởi tạo ChromaDB độc lập
+# =====================================================================
+# BÍ QUYẾT CHỐNG "BỊA SÁCH": CHỈ THỊ HỆ THỐNG CỰC KỲ KHẮT KHE
+# =====================================================================
+system_instruction = """
+Bạn là một chuyên gia tư vấn sách uyên bác đang làm việc tại BookStore.
+Sứ mệnh của bạn là truyền cảm hứng đọc sách và giúp khách hàng tìm được sách phù hợp.
+
+QUY TẮC CỐT LÕI (BẮT BUỘC TUÂN THỦ 100%):
+1. HỆ THỐNG SẼ CUNG CẤP [DANH SÁCH SÁCH GỢI Ý TỪ DATABASE]. Bạn PHẢI DỰA VÀO ĐÂY để tư vấn.
+2. NGHIÊM CẤM TỰ BỊA RA TÊN SÁCH: Tuyệt đối chỉ giới thiệu những cuốn sách có mặt trong [DANH SÁCH SÁCH GỢI Ý]. Không được đề xuất sách bên ngoài, dù nó rất nổi tiếng.
+3. NẾU danh sách gợi ý trống, hãy thành thật xin lỗi: "Hiện tại cửa hàng mình tạm thời chưa có cuốn sách nào sát với yêu cầu này của bạn."
+4. Xưng "mình" và gọi khách là "bạn". Trình bày rõ ràng, chia đoạn ngắn dễ đọc, dùng các emoji như 📚, ✨.
+"""
+
+# Khởi tạo mô hình Gemini 2.5 Flash
+model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction=system_instruction
+)
+
+# Bộ nhớ tạm của Server để AI nhớ lịch sử trò chuyện theo từng khách hàng
+chat_sessions = {}
+
+# Kết nối CSDL Vector (ChromaDB)
 try:
     chroma_client = chromadb.PersistentClient(path="./chroma_db")
     ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-    collection = chroma_client.get_or_create_collection(name="books_search", embedding_function=ef)
+    collection = chroma_client.get_collection(name="books_search", embedding_function=ef)
 except Exception as e:
-    print(f"⚠️ Cảnh báo: Lỗi ChromaDB trong Chatbot - {e}")
     collection = None
-
-# Hàm kết nối CSDL dùng riêng cho Chatbot
-def get_db():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASS", ""),
-        database=os.getenv("DB_NAME", "bookstore"),
-        port=int(os.getenv("DB_PORT", 3306))
-    )
+    print("Lỗi kết nối ChromaDB trong Chatbot:", e)
 
 @chat_bp.route('/api/chat', methods=['POST'])
 def chat():
+    data = request.json
+    user_message = data.get('message', '').strip()
+    
+    if not user_message:
+        return jsonify({'response': 'Bạn muốn hỏi gì nào? 😊', 'books': []})
+
+    # Lấy ID của khách (nếu chưa đăng nhập thì dùng session chung)
+    user_id = session.get('user_id', 'guest_user')
+    if user_id not in chat_sessions:
+        chat_sessions[user_id] = model.start_chat(history=[])
+    
+    current_chat = chat_sessions[user_id]
+
     try:
-        user_msg = request.json.get('message', '').strip()
-        if not user_msg:
-            return jsonify({"response": "Bạn muốn hỏi gì nào?", "books": []})
-
-        # --- LẤY THÔNG TIN CÁ NHÂN CỦA KHÁCH HÀNG ---
-        user_name = session.get('user_name', 'Khách hàng')
-        user_id = session.get('user_id', None)
-
-        # --- MÀNG LỌC Ý ĐỊNH BẰNG PYTHON (Khắc phục AI lười) ---
-        user_msg_lower = user_msg.lower()
-        is_chat_only = False
-        chat_keywords = ['chào', 'hello', 'hi', 'cảm ơn', 'thanks', 'tạm biệt', 'bye', 'ok', 'oke', 'vâng', 'dạ']
+        recommended_books = []
+        context_for_ai = ""
         
-        # Nếu câu nói dưới 20 ký tự VÀ chứa các từ giao tiếp cơ bản, khóa chức năng tìm sách
-        if len(user_msg_lower) <= 20 and any(kw in user_msg_lower for kw in chat_keywords):
-            is_chat_only = True
+        # ==============================================================
+        # 1. BỘ LỌC TOÁN HỌC: BẮT ĐIỀU KIỆN GIÁ TRONG CÂU HỎI
+        # ==============================================================
+        max_price = float('inf') # Mặc định là vô hạn
+        # Tìm các cụm từ như "dưới 100k", "dưới 100.000đ", "dưới 50 nghìn"
+        price_match = re.search(r'dưới\s*([\d\.,]+)\s*(k|nghìn|đ)?', user_message.lower())
+        if price_match:
+            # Làm sạch chuỗi số (xóa dấu chấm, phẩy)
+            num_str = price_match.group(1).replace('.', '').replace(',', '')
+            if num_str.isdigit():
+                val = int(num_str)
+                unit = price_match.group(2)
+                
+                # Tính toán ra giá trị thực (VND)
+                if unit in ['k', 'nghìn']:
+                    max_price = val * 1000
+                elif val < 1000 and not unit: # Nếu khách gõ "dưới 100" (ngầm hiểu 100k)
+                    max_price = val * 1000
+                else:
+                    max_price = val
 
-        # --- SIÊU NĂNG LỰC 1: TRA CỨU ĐƠN HÀNG TỰ ĐỘNG BẰNG TỪ KHÓA ---
-        order_context = ""
-        check_order_keywords = ['đơn hàng', 'đơn của tôi', 'giao chưa', 'tình trạng đơn', 'kiểm tra đơn']
-        if user_id and any(kw in user_msg_lower for kw in check_order_keywords):
-            conn = get_db()
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("""
-                SELECT id, status, total_money, orderDate 
-                FROM orders WHERE user_id = %s ORDER BY orderDate DESC LIMIT 1
-            """, (user_id,))
-            last_order = cursor.fetchone()
-            conn.close()
-
-            if last_order:
-                order_context = f"""
-                [THÔNG TIN MẬT CHO AI]: Khách đang hỏi về đơn hàng. 
-                Đơn hàng gần nhất của {user_name} có mã là #{last_order['id'][:8]}. 
-                Tổng tiền: {float(last_order['total_money']):,.0f}đ. 
-                Trạng thái hiện tại: {last_order['status']}. 
-                Hãy báo cáo trạng thái này cho khách.
-                """
-            else:
-                order_context = f"[THÔNG TIN MẬT CHO AI]: Hệ thống kiểm tra thấy {user_name} chưa có đơn hàng nào."
-
-        # --- SIÊU NĂNG LỰC 2: RAG TÌM SÁCH THÔNG MINH ---
-        found_books = []
-        rag_context = ""
-        
-        # Chỉ kích hoạt quét RAG nếu KHÔNG phải là chat phiếm và KHÔNG hỏi đơn hàng
-        if collection and not order_context and not is_chat_only:
-            results = collection.query(query_texts=[user_msg], n_results=3)
+        # ==============================================================
+        # 2. TÌM KIẾM BẰNG CHROMADB VÀ LỌC LẠI
+        # ==============================================================
+        if collection:
+            # Lấy hẳn 15 cuốn để phòng hờ bị loại bớt do giá
+            results = collection.query(query_texts=[user_message], n_results=15)
+            
             if results['ids'] and results['ids'][0]:
-                found_ids = results['ids'][0]
-                conn = get_db()
-                cursor = conn.cursor(dictionary=True)
-                fmt = ','.join(['%s'] * len(found_ids))
-                cursor.execute(f"""
-                    SELECT p.id, p.title, p.sale_price as price, p.description, c.name as category_name,
-                           (SELECT url FROM image_product WHERE product_id = p.id LIMIT 1) as image_url
-                    FROM products p LEFT JOIN categories c ON p.category_id = c.id
-                    WHERE p.id IN ({fmt}) AND p.deleted = 0
-                """, tuple(found_ids))
-                found_books = cursor.fetchall()
-                conn.close()
+                for i in range(len(results['ids'][0])):
+                    book_id = results['ids'][0][i]
+                    meta = results['metadatas'][0][i]
+                    price = float(meta.get('price', 0))
+                    
+                    # CHỐT CHẶN THẦN THÁNH: Cuốn nào đắt hơn max_price là loại bỏ thẳng tay!
+                    if price <= max_price:
+                        # Đưa vào mảng để gửi xuống giao diện tạo nút bấm
+                        recommended_books.append({
+                            'id': book_id,
+                            'title': meta.get('title', 'Sách hay'),
+                            'price': price
+                        })
+                        
+                        # Tạo bối cảnh cho AI đọc
+                        context_for_ai += f"- Cuốn: '{meta.get('title')}' (Giá: {price}đ)\n"
+                        
+                    # Chỉ lấy tối đa 4 cuốn xuất sắc nhất để hiện ra web
+                    if len(recommended_books) == 4:
+                        break
 
-                context_list = []
-                for b in found_books:
-                    b['price'] = float(b['price']) if b['price'] else 0
-                    cat_name = b['category_name'] or 'Chưa phân loại'
-                    context_list.append(f"- Sách: {b['title']} (Thể loại: {cat_name}). Giá: {b['price']:,.0f}đ. Mô tả: {b['description']}")
-                rag_context = "\n".join(context_list)
+        # 3. ÉP AI PHẢI ĐỌC DỮ LIỆU ĐÃ ĐƯỢC LỌC KỸ
+        if context_for_ai:
+            prompt = f"Khách hàng hỏi: '{user_message}'.\n\n[DANH SÁCH SÁCH GỢI Ý TỪ DATABASE]:\n{context_for_ai}\n\nHãy tư vấn và mời khách mua các cuốn sách này. Không bịa sách khác."
+        else:
+            prompt = f"Khách hàng hỏi: '{user_message}'.\n\n[DANH SÁCH SÁCH GỢI Ý TỪ DATABASE]: (Trống)\n\nHãy trả lời khách và khéo léo nói rằng hiện tại cửa hàng không có cuốn nào có mức giá đó."
 
-        # --- QUẢN LÝ LỊCH SỬ VÀ XÂY DỰNG PROMPT ---
-        if 'chat_history' not in session: session['chat_history'] = []
-        history = session['chat_history']
-
-        # Dạy AI nhận biết bản thân và khách hàng với KỶ LUẬT THÉP
-        system_prompt = f"""Bạn là AI tư vấn sách của BookStore. Tên khách hàng đang chat là: {user_name}.
-Quy tắc BẮT BUỘC phải tuân thủ (vi phạm sẽ bị tắt hệ thống):
-1. Thái độ: Xưng "mình", gọi khách là "{user_name}". Nói chuyện chân thật, NGẮN GỌN, đi thẳng vào vấn đề. TUYỆT ĐỐI KHÔNG dùng từ sáo rỗng, KHÔNG khen ngợi hay nịnh nọt khách.
-2. Xử lý mã bí mật: 
-   - Nếu khách CHỈ chào hỏi bình thường HOẶC bạn đang trả lời về đơn hàng: Bạn BẮT BUỘC phải viết mã [NO_BOOK] vào ngay đầu câu trả lời, và không giới thiệu sách.
-3. KHI KHÁCH TÌM SÁCH (Rất quan trọng):
-   - Bạn phải đối chiếu yêu cầu của khách với "Dữ liệu kho sách" được cung cấp.
-   - Nếu cuốn sách khách tìm KHÔNG CÓ mặt trong "Dữ liệu kho sách", BẠN PHẢI NÓI RÕ RÀNG: "Xin lỗi {user_name}, hiện tại cửa hàng mình không có cuốn sách này."
-   - Sau khi xin lỗi, bạn mới được phép giới thiệu các cuốn sách thay thế có trong "Dữ liệu kho sách" (nếu thấy phù hợp).
-   - TUYỆT ĐỐI không tự bịa ra bất kỳ tên sách nào không có trong dữ liệu."""
-
-        messages = [{"role": "system", "content": system_prompt}]
-        messages.extend(history[-4:])
-
-        # Cung cấp ngữ cảnh cho câu hỏi hiện tại
-        current_context = ""
-        if order_context: current_context += f"{order_context}\n"
-        if rag_context: current_context += f"Dữ liệu kho sách:\n{rag_context}\n"
+        # 4. Gửi cho Gemini suy luận
+        response = current_chat.send_message(prompt)
         
-        user_content = f"{current_context}\nKhách ({user_name}) nói: {user_msg}" if current_context else user_msg
-        messages.append({"role": "user", "content": user_content})
-
-        # --- GỌI LLM XỬ LÝ ---
-        response = requests.post("http://localhost:11434/api/chat", json={
-            "model": "qwen2:1.5b",
-            "messages": messages,
-            "stream": False
+        return jsonify({
+            'response': response.text,
+            'books': recommended_books # Trả về danh sách đã lọc chặt chẽ
         })
         
-        if response.status_code == 200:
-            ai_reply = response.json()['message']['content']
-            
-            # --- BỘ LỌC XÓA MẬT MÃ TRƯỚC KHI TRẢ VỀ CHO KHÁCH ---
-            if "[NO_BOOK]" in ai_reply:
-                ai_reply = ai_reply.replace("[NO_BOOK]", "").strip()
-                found_books = [] 
-            
-            history.append({"role": "user", "content": user_msg})
-            history.append({"role": "assistant", "content": ai_reply})
-            session['chat_history'] = history
-            
-            return jsonify({"response": ai_reply, "books": found_books})
-        else:
-            return jsonify({"response": "Lỗi kết nối với lõi AI cục bộ.", "books": []})
-            
     except Exception as e:
-        print(f"Lỗi AI: {e}")
-        return jsonify({"response": "Hệ thống Ollama đang tắt. Vui lòng mở terminal gõ 'ollama run qwen2:1.5b'.", "books": []})
-
-@chat_bp.route('/api/clear-chat', methods=['POST'])
-def clear_chat():
-    session.pop('chat_history', None)
-    return jsonify({"success": True})
+        print("Lỗi Gemini API:", e)
+        return jsonify({
+            'response': 'Xin lỗi bạn, hệ thống AI đang nghẽn mạng một chút. Bạn hỏi lại mình sau vài giây nhé! 🛠️',
+            'books': []
+        })

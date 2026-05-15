@@ -23,7 +23,7 @@
         * { box-sizing: border-box; }
         body { font-family: 'Be Vietnam Pro', sans-serif; background: #f5f8fc; color: var(--text-dark); }
 
-        /* ===== SCROLLING TOPBAR (THAY THẾ TOPBAR CŨ) ===== */
+        /* ===== SCROLLING TOPBAR ===== */
         .topbar-scroller {
             background: linear-gradient(90deg, #0d1b3e, #1a1a2e, #0d1b3e);
             color: #fff;
@@ -118,17 +118,27 @@
         .social-btn:hover { transform: translateY(-3px) scale(1.1); background: var(--primary) !important; color: #fff; }
 
         /* ===== CHAT BOT ===== */
-        #chat-btn { position: fixed; bottom: 24px; right: 24px; z-index: 1050; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(0,102,179,0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; animation: chat-pulse 3s ease-in-out infinite; }
+        #chat-btn { position: fixed; bottom: 24px; right: 24px; z-index: 1050; width: 56px; height: 56px; border-radius: 50%; border: none; background: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(0,102,179,0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; animation: chat-pulse 3s ease-in-out infinite; }
         #chat-btn:hover { background: var(--primary-dark); transform: scale(1.08); }
         @keyframes chat-pulse { 0%, 100% { box-shadow: 0 4px 20px rgba(0,102,179,0.4); } 50% { box-shadow: 0 4px 30px rgba(0,102,179,0.7), 0 0 0 8px rgba(0,102,179,0.1); } }
-        #chat-window { position: fixed; bottom: 90px; right: 24px; z-index: 1050; width: 340px; height: 460px; border-radius: 16px; overflow: hidden; display: none; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
-        .chat-header { background: var(--primary); }
-        #chat-body { flex: 1; overflow-y: auto; background: #f8fafc; }
-        .bot-msg { background: #fff; border-radius: 0 12px 12px 12px; padding: 10px 14px; margin: 10px; font-size: 0.88rem; border: 1px solid var(--border); max-width: 85%; line-height: 1.5; }
-        .user-msg { background: var(--primary); color: #fff; border-radius: 12px 0 12px 12px; padding: 10px 14px; margin: 10px; font-size: 0.88rem; max-width: 85%; margin-left: auto; line-height: 1.5; }
-        .chat-footer { background: #fff; }
-        .chat-footer input { font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.88rem; }
         
+        #chat-window { position: fixed; bottom: 95px; right: 24px; z-index: 1050; width: 400px; height: 580px; border-radius: 16px; overflow: hidden; display: none; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.22); border: 1px solid rgba(0,0,0,0.05); }
+        
+        .chat-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 16px; }
+        #chat-body { flex: 1; overflow-y: auto; background: #f8fafc; padding: 16px; }
+        .bot-msg { background: #fff; border-radius: 0 14px 14px 14px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.92rem; border: 1px solid var(--border); max-width: 88%; line-height: 1.5; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+        .user-msg { background: var(--primary); color: #fff; border-radius: 14px 0 14px 14px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.92rem; max-width: 88%; margin-left: auto; line-height: 1.5; box-shadow: 0 2px 6px rgba(0,102,179,0.15); }
+        .chat-footer { background: #fff; border-top: 1px solid #eef2f6; padding: 12px 16px; }
+        .chat-footer input { font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.9rem; padding: 10px 16px; }
+        
+        /* QUICK REPLIES */
+        .quick-reply-btn { background: #fff; color: var(--primary); border: 1.5px solid var(--primary-light); border-radius: 20px; padding: 8px 16px; font-size: 0.88rem; cursor: pointer; transition: all 0.25s ease; text-align: left; box-shadow: 0 2px 8px rgba(0,102,179,0.05); font-weight: 500; }
+        .quick-reply-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,102,179,0.2); }
+        
+        /* Cải tiến UI Sách Gợi ý trong Chatbot */
+        .ai-book-link { border-left: 3px solid var(--secondary); background: #fff; padding: 8px 12px; border-radius: 0 6px 6px 0; margin-top: 6px; display: block; text-decoration: none; color: var(--text-dark); transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        .ai-book-link:hover { background: #fdfdfd; transform: translateX(3px); border-left-color: var(--primary); }
+
         .notif-btn { background: none; border: none; color: #fff; position: relative; padding: 6px 10px; }
         .notif-badge { position: absolute; top: 0; right: 0; background: var(--secondary); color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
@@ -143,14 +153,14 @@
         #scroll-top-btn:hover { background: var(--primary); color: #fff; transform: translateY(-2px); }
         #scroll-top-btn.visible { display: flex; }
 
-        @media (max-width: 768px) { .topbar-scroller { display: none; } .search-wrapper { max-width: 100%; } #chat-window { width: calc(100vw - 20px); right: 10px; } }
+        @media (max-width: 768px) { .topbar-scroller { display: none; } .search-wrapper { max-width: 100%; } #chat-window { width: calc(100vw - 20px); height: 75vh; right: 10px; bottom: 85px; } }
     </style>
 </head>
 <body>
 
     <div class="topbar-scroller d-none d-md-block">
         <div class="topbar-scroller-content">
-            🎉 <span class="text-highlight">BOOKSTORE</span> TƯNG BỪNG KHAI TRƯƠNG — 
+            🎉 <span class="text-highlight">BOOKSTORE AI</span> TƯNG BỪNG KHAI TRƯƠNG — 
             <span class="text-cyan">MIỄN PHÍ GIAO HÀNG</span> TOÀN QUỐC CHO MỌI ĐƠN HÀNG! 
             <span class="mx-4 text-muted">|</span> 
             🎁 NHẬP MÃ <span class="text-coupon">OPENING</span> ĐỂ GIẢM NGAY 20% CHO 100 KHÁCH HÀNG ĐẦU TIÊN! 
@@ -172,7 +182,7 @@
                 </a>
 
                 <form action="/search" method="GET" class="search-wrapper d-flex flex-grow-1">
-                    <input type="text" name="keyword" placeholder="Tìm kiếm sách, tác giả..." value="{{ request.args.get('keyword', '') }}">
+                    <input type="text" name="keyword" placeholder="Tìm kiếm" value="{{ request.args.get('keyword', '') }}">
                     <button type="submit"><i class="fas fa-search"></i></button>
                 </form>
 
@@ -401,26 +411,35 @@
         <i class="fas fa-robot fa-lg"></i>
     </button>
     <div id="chat-window">
-        <div class="chat-header p-3 d-flex justify-content-between align-items-center">
+        <div class="chat-header d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center text-white">
-                <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+                <div style="width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;">
                     <i class="fas fa-robot"></i>
                 </div>
                 <div>
-                    <div class="fw-bold" style="font-size:0.9rem;">Trợ lý tư vấn sách</div>
-                    <small style="opacity:0.8;font-size:0.75rem;">🟢 Đang hoạt động</small>
+                    <div class="fw-bold" style="font-size:0.95rem;">Trợ lý tư vấn sách</div>
+                    <small style="opacity:0.85;font-size:0.75rem;">🟢 Đang hoạt động (Gemini 2.5)</small>
                 </div>
             </div>
             <button onclick="toggleChat()" class="btn-close btn-close-white btn-sm"></button>
         </div>
-        <div id="chat-body" class="p-2" style="flex:1;overflow-y:auto;">
-            <div class="bot-msg">Xin chào! 👋<br>Mình là AI tư vấn sách. Bạn đang tìm thể loại sách nào?</div>
+        
+        <div id="chat-body">
+            <div class="bot-msg">Xin chào! 👋<br>Mình là Trợ lý AI của BookStore. Mình có thể giúp bạn tìm cuốn sách tuyệt vời tiếp theo không?</div>
+            
+            <div class="chat-quick-replies d-flex flex-wrap gap-2 mb-3" id="quick-replies-box">
+                <button class="quick-reply-btn" onclick="sendQuickReply('Gợi ý cho mình vài cuốn sách kỹ năng sống')">💡 Sách kỹ năng sống</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('Tìm giúp mình sách có giá dưới 100.000đ')">💰 Sách dưới 100k</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('Những cuốn sách nào đang bán chạy nhất?')">🔥 Top sách bán chạy</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('Gợi ý sách để xả stress, chữa lành')">🌿 Sách chữa lành</button>
+            </div>
         </div>
-        <div class="chat-footer p-2 d-flex gap-2">
+        
+        <div class="chat-footer d-flex gap-2">
             <input type="text" id="user-input" class="form-control rounded-pill" 
-                   style="font-size:0.85rem;" placeholder="Hỏi về sách..." onkeypress="handleEnter(event)">
-            <button onclick="sendMessage()" class="btn btn-primary rounded-circle" style="width:36px;height:36px;padding:0;flex-shrink:0;">
-                <i class="fas fa-paper-plane" style="font-size:0.8rem;"></i>
+                   placeholder="Nhập câu hỏi của bạn..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()" class="btn btn-primary rounded-circle" style="width:40px;height:40px;padding:0;flex-shrink:0;">
+                <i class="fas fa-paper-plane" style="font-size:0.9rem;"></i>
             </button>
         </div>
     </div>
@@ -435,6 +454,17 @@
         let alertModal;
         document.addEventListener("DOMContentLoaded", function() {
             alertModal = new bootstrap.Modal(document.getElementById('systemAlertModal'));
+            
+            // ===== PHỤC HỒI LỊCH SỬ CHAT TỪ SESSION STORAGE =====
+            const savedChat = sessionStorage.getItem('bookstore_chat_history');
+            const chatBody = document.getElementById('chat-body');
+            const quickBox = document.getElementById('quick-replies-box');
+            
+            if (savedChat && savedChat.trim() !== '') {
+                chatBody.innerHTML = savedChat;
+                if (quickBox) quickBox.style.display = 'none'; // Ẩn gợi ý nếu đã có chat
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
         });
 
         function showSystemAlert(type, title, message, callback = null) {
@@ -459,37 +489,37 @@
             }
         }
 
-        function showSystemConfirm(title, message, confirmCallback) {
-            const alertBody = document.getElementById('systemAlertBody');
-            alertBody.innerHTML = `
-                <div class="alert-icon-wrapper info"><i class="fas fa-question"></i></div>
-                <h5 class="fw-bold text-dark mb-2">${title}</h5>
-                <p class="text-muted mb-4" style="font-size: 0.9rem; line-height: 1.6;">${message}</p>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-light w-50 rounded-pill fw-bold py-2 border" data-bs-dismiss="modal">Hủy</button>
-                    <button class="btn btn-primary w-50 rounded-pill fw-bold py-2" id="btn-confirm-action">Xác nhận</button>
-                </div>
-            `;
-            alertModal.show();
-            document.getElementById('btn-confirm-action').onclick = function() {
-                alertModal.hide();
-                if(confirmCallback) confirmCallback();
-            };
-        }
-
-        /* ===== CHATBOT SCRIPT ===== */
+        /* ===== CHATBOT SCRIPT CÓ LƯU TRỮ LỊCH SỬ ===== */
         function toggleChat() {
             const w = document.getElementById('chat-window');
             w.style.display = (w.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function sendQuickReply(text) {
+            document.getElementById('user-input').value = text;
+            sendMessage();
+        }
+
+        // Hàm lưu trữ HTML của khung chat vào bộ nhớ trình duyệt
+        function saveChatHistory() {
+            const chatBody = document.getElementById('chat-body');
+            sessionStorage.setItem('bookstore_chat_history', chatBody.innerHTML);
         }
 
         async function sendMessage() {
             const input = document.getElementById('user-input');
             const msg = input.value.trim();
             const body = document.getElementById('chat-body');
+            const quickBox = document.getElementById('quick-replies-box');
+
             if (!msg) return;
 
+            if (quickBox) quickBox.style.display = 'none';
+
+            // Ghi tin nhắn của User
             body.innerHTML += `<div class="user-msg">${msg}</div>`;
+            saveChatHistory(); // Lưu ngay sau khi khách hỏi
+            
             input.value = '';
             body.scrollTop = body.scrollHeight;
 
@@ -503,25 +533,40 @@
                     body: JSON.stringify({ message: msg })
                 });
                 const data = await res.json();
-                document.getElementById(lid).remove();
+                
+                // Xóa icon Đang suy nghĩ
+                const loadingDiv = document.getElementById(lid);
+                if(loadingDiv) loadingDiv.remove();
 
                 let html = `<div class="bot-msg">${data.response.replace(/\n/g,'<br>')}</div>`;
+                
+                // KIẾN TẠO CÁC NÚT LINK SẢN PHẨM TRỰC TIẾP TỪ DATABASE
                 if (data.books && data.books.length > 0) {
-                    html += `<div class="bot-msg" style="background:#e8f4ff;border-color:#b3d7ff;"><small class="fw-bold text-primary">📚 Gợi ý sách:</small><br>`;
+                    html += `<div class="bot-msg" style="background:#f4f9ff; border-color:#b3d7ff;">
+                                <small class="fw-bold text-primary mb-1 d-block"><i class="fas fa-layer-group me-1"></i>Sách có sẵn tại cửa hàng:</small>`;
                     data.books.forEach(b => {
-                        html += `<a href="/book/${b.id}" class="text-decoration-none d-block mt-1" style="font-size:0.85rem;">📖 ${b.title} - <span class="text-danger fw-bold">${new Intl.NumberFormat('vi-VN').format(b.price)}đ</span></a>`;
+                        html += `<a href="/book/${b.id}" class="ai-book-link">
+                                    <div class="fw-bold" style="font-size:0.88rem;">${b.title}</div>
+                                    <div class="text-danger fw-bold" style="font-size:0.8rem;">${new Intl.NumberFormat('vi-VN').format(b.price)}đ <i class="fas fa-arrow-right ms-1" style="font-size:0.7rem;"></i></div>
+                                 </a>`;
                     });
                     html += `</div>`;
                 }
+                
                 body.innerHTML += html;
+                saveChatHistory(); // Lưu sau khi Bot trả lời xong
+                
             } catch {
-                document.getElementById(lid).innerText = '⚠️ Lỗi kết nối server!';
+                const loadingDiv = document.getElementById(lid);
+                if(loadingDiv) loadingDiv.remove();
+                body.innerHTML += `<div class="bot-msg text-danger"><i class="fas fa-exclamation-triangle"></i> Lỗi kết nối máy chủ AI!</div>`;
             }
             body.scrollTop = body.scrollHeight;
         }
 
         function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
 
+        // Khác
         function markNotificationsRead() {
             const badge = document.getElementById('notif-badge');
             if (badge) {
@@ -530,7 +575,6 @@
             }
         }
 
-        // Scroll to top button
         window.addEventListener('scroll', function() {
             const btn = document.getElementById('scroll-top-btn');
             if (window.scrollY > 400) btn.classList.add('visible');
